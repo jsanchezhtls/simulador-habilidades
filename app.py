@@ -87,9 +87,9 @@ if st.session_state.fase == "chat":
                     with st.spinner("Generando voz premium..."):
                         audio_response = client.audio.speech.create(
                             model="tts-1",
-                            voice="shimmer",  # Voz femenina, profesional y clara. Otras opciones: 'nova' o 'alloy'
+                            voice="nova",  # Voz femenina, profesional y clara. Otras opciones: 'nova' o 'alloy'
                             input=respuesta_camila,
-                            speed=1.15       # Ajusta la velocidad por defecto (1.0 es normal, 1.15 es un poco más rápido y fluido)
+                            speed=1.10       # Ajusta la velocidad por defecto (1.0 es normal, 1.15 es un poco más rápido y fluido)
                             )
                     audio_response.write_to_file("camila_voz.mp3")
                     
