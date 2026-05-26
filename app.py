@@ -102,21 +102,31 @@ if st.session_state.fase == "chat":
                 st.error(f"Hubo un problema con la API: {e}")
 
 # --- HISTORIAL VISUAL DE LA CONVERSACIÓN ---
-# Usamos tu variable real 'conversacion_texto'
-if "conversacion_texto" in st.session_state and len(st.session_state.conversacion_texto) > 1:
+if "conversacion_texto" in st.session_state and len(st.session_state.conversacion_texto) > 0:
     st.markdown("---")
     st.markdown("### 💬 Transcripción de la conversación:")
     
-    # Recorremos tus mensajes guardados
     for msg in st.session_state.conversacion_texto:
-        # Filtramos por si acaso las instrucciones del sistema
-        if msg.get("role") == "system":
-            continue
+        # 1. Si el mensaje es un diccionario (Formato OpenAI estructurado)
+        if isinstance(msg, dict):
+            rol = msg.get("role", "")
+            contenido = msg.get("content", "")
             
-        # Si el mensaje es del estudiante
-        if msg.get("role") == "user":
-            st.markdown(f"**👤 Tú:** {msg['content']}")
-            
-        # Si el mensaje es la respuesta de Camila
-        elif msg.get("role") == "assistant":
-            st.markdown(f"**👩‍💼 Camila:** {msg['content']}")
+            if rol == "system":
+                continue
+            elif rol == "user":
+                st.markdown(f"**👤 Tú:** {contenido}")
+            elif rol == "assistant":
+                st.markdown(f"**👩‍💼 Camila:** {contenido}")
+                
+        # 2. Si el mensaje es texto plano (Formato String directo)
+        elif isinstance(msg, str):
+            # Si el texto empieza con "Tú:" o "Usuario:" lo pintamos con su avatar
+            if msg.startswith("Tú:") or msg.startswith("Usuario:"):
+                st.markdown(f"**👤 {msg}**")
+            # Si empieza con "Camila:" o "Asistente:"
+            elif msg.startswith("Camila:") or msg.startswith("Asistente:"):
+                st.markdown(f"**👩‍💼 {msg}**")
+            # Por si acaso es un texto suelto sin formato
+            else:
+                st.markdown(f"{msg}")
