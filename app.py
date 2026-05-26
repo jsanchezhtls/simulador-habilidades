@@ -85,17 +85,18 @@ if st.session_state.fase == "chat":
                     
                     # Convertir respuesta de Camila a audio ultra realista con OpenAI TTS
                     with st.spinner("Generando voz premium..."):
-                    audio_response = client.audio.speech.create(
-                    model="tts-1",
-                    voice="shimmer",  # Voz femenina, profesional y clara. Otras opciones: 'nova' o 'alloy'
-                    input=respuesta_camila,
-                    speed=1.15       # Ajusta la velocidad por defecto (1.0 es normal, 1.15 es un poco más rápido y fluido)
-                    )
+                        audio_response = client.audio.speech.create(
+                            model="tts-1",
+                            voice="shimmer",  # Voz femenina, profesional y clara. Otras opciones: 'nova' o 'alloy'
+                            input=respuesta_camila,
+                            speed=1.15       # Ajusta la velocidad por defecto (1.0 es normal, 1.15 es un poco más rápido y fluido)
+                            )
                     audio_response.write_to_file("camila_voz.mp3")
                     
                     # Reproducir automáticamente
                     st.markdown("### 🗣️ Camila dice:")
                     st.audio("camila_voz.mp3", format="audio/mp3", autoplay=True)
+
             
             except Exception as e:
                 st.error(f"Hubo un problema con la API: {e}")
