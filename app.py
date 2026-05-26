@@ -106,6 +106,12 @@ if "conversacion_texto" in st.session_state and st.session_state.conversacion_te
     st.markdown("---")
     st.markdown("### 💬 Transcripción de la conversación:")
     
-    # Como tu variable ya es un texto completo, lo mostramos directo
-    # Usamos un contenedor de texto amigable para que respete los saltos de línea
-    st.write(st.session_state.conversacion_texto)
+    # Tomamos el texto original
+    texto_con_iconos = st.session_state.conversacion_texto
+    
+    # Hacemos la magia: reemplazamos los nombres por versiones con emoticones
+    texto_con_iconos = texto_con_iconos.replace("Tú:", "👤 Tú:")
+    texto_con_iconos = texto_con_iconos.replace("Camila:", "👩‍💼 Camila:")
+    
+    # Mostramos el texto ya transformado y estilizado
+    st.write(texto_con_iconos)
