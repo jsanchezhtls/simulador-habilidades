@@ -83,9 +83,15 @@ if st.session_state.fase == "chat":
                     st.session_state.historial.append({"role": "assistant", "content": respuesta_camila})
                     st.session_state.conversacion_texto += f"**Camila:** {respuesta_camila}\n\n"
                     
-                    # Convertir respuesta de Camila a audio (gTTS)
-                    tts = gTTS(text=respuesta_camila, lang='es', tld='com.mx')
-                    tts.save("camila_voz.mp3")
+                    # Convertir respuesta de Camila a audio ultra realista con OpenAI TTS
+                    with st.spinner("Generando voz premium..."):
+                    audio_response = client.audio.speech.create(
+                    model="tts-1",
+                    voice="shimmer",  # Voz femenina, profesional y clara. Otras opciones: 'nova' o 'alloy'
+                    input=respuesta_camila,
+                    speed=1.15       # Ajusta la velocidad por defecto (1.0 es normal, 1.15 es un poco más rápido y fluido)
+                    )
+                    audio_response.write_to_file("camila_voz.mp3")
                     
                     # Reproducir automáticamente
                     st.markdown("### 🗣️ Camila dice:")
