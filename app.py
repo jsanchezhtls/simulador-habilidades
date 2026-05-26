@@ -101,51 +101,17 @@ if st.session_state.fase == "chat":
             except Exception as e:
                 st.error(f"Hubo un problema con la API: {e}")
 
-# Importamos las librerías necesarias al inicio o dentro del bloque si lo prefieres
-from streamlit_gsheets import GSheetsConnection
-from datetime import datetime
-import pandas as pd
-
 # --- HISTORIAL VISUAL DE LA CONVERSACIÓN ---
 if "conversacion_texto" in st.session_state and st.session_state.conversacion_texto:
     st.markdown("---")
     st.markdown("### 💬 Transcripción de la conversación:")
     
+    # Tomamos el texto original
     texto_con_iconos = st.session_state.conversacion_texto
+    
+    # Hacemos la magia: reemplazamos los nombres por versiones con emoticones
     texto_con_iconos = texto_con_iconos.replace("Tú:", "👤 Tú:")
     texto_con_iconos = texto_con_iconos.replace("Camila:", "👩‍💼 Camila:")
     
+    # Mostramos el texto ya transformado y estilizado
     st.write(texto_con_iconos)
-    
-    st.markdown("#### 🚀 Guardar Reporte del Docente:")
-    
-    # Botón interactivo para enviar a la nube
-    if st.button("📊 Enviar conversación a Google Sheets central"):
-        with st.spinner("Guardando en la base de datos..."):
-            try:
-                # 1. Establecemos la conexión con la hoja
-                # Reemplaza la URL de abajo por la URL real de tu Google Sheet
-                url_hoja = "https://docs.google.com/spreadsheets/d/1wRZoKUEbvVfrETp7aUnjyzl9qNW99XhbGLGWocngJuQ/edit?usp=sharing"
-                
-                conn = st.connection("gsheets", type=GSheetsConnection)
-                
-                # 2. Leemos los datos existentes actuales
-                df_existente = conn.read(spreadsheet=url_hoja, usecols=[0, 1])
-                
-                # 3. Creamos la nueva fila con la fecha actual y la conversación limpia
-                fecha_actual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                nueva_fila = pd.DataFrame([{
-                    "Fecha": fecha_actual,
-                    "Historial_Completo": st.session_state.conversacion_texto
-                }])
-                
-                # 4. Concatenamos los datos viejos con el nuevo registro
-                df_actualizado = pd.concat([df_existente, nueva_fila], ignore_index=True)
-                
-                # 5. Sobrescribimos la hoja con la lista actualizada
-                conn.update(spreadsheet=url_hoja, data=df_actualizado)
-                
-                st.success("¡Transmisión completada con éxito! La conversación ha sido registrada en el Google Sheets del docente.")
-                
-            except Exception as e:
-                st.error(f"No se pudo guardar en la nube: {e}")
