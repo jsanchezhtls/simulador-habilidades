@@ -102,21 +102,21 @@ if st.session_state.fase == "chat":
                 st.error(f"Hubo un problema con la API: {e}")
 
 # --- HISTORIAL VISUAL DE LA CONVERSACIÓN ---
-# Verificamos si hay mensajes guardados en la memoria interna
-if "messages" in st.session_state and len(st.session_state.messages) > 1:
+# Usamos tu variable real 'conversacion_texto'
+if "conversacion_texto" in st.session_state and len(st.session_state.conversacion_texto) > 1:
     st.markdown("---")
     st.markdown("### 💬 Transcripción de la conversación:")
     
-    # Recorremos los mensajes saltándonos el primero (que es la instrucción del sistema)
-    for msg in st.session_state.messages:
-        # Si el rol es 'system', no lo mostramos al estudiante
-        if msg["role"] == "system":
+    # Recorremos tus mensajes guardados
+    for msg in st.session_state.conversacion_texto:
+        # Filtramos por si acaso las instrucciones del sistema
+        if msg.get("role") == "system":
             continue
             
-        # Si el mensaje es del estudiante (usuario)
-        if msg["role"] == "user":
+        # Si el mensaje es del estudiante
+        if msg.get("role") == "user":
             st.markdown(f"**👤 Tú:** {msg['content']}")
             
-        # Si el mensaje es la respuesta de Camila (asistente)
-        elif msg["role"] == "assistant":
+        # Si el mensaje es la respuesta de Camila
+        elif msg.get("role") == "assistant":
             st.markdown(f"**👩‍💼 Camila:** {msg['content']}")
