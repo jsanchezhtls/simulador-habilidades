@@ -102,31 +102,10 @@ if st.session_state.fase == "chat":
                 st.error(f"Hubo un problema con la API: {e}")
 
 # --- HISTORIAL VISUAL DE LA CONVERSACIÓN ---
-if "conversacion_texto" in st.session_state and len(st.session_state.conversacion_texto) > 0:
+if "conversacion_texto" in st.session_state and st.session_state.conversacion_texto:
     st.markdown("---")
     st.markdown("### 💬 Transcripción de la conversación:")
     
-    for msg in st.session_state.conversacion_texto:
-        # 1. Si el mensaje es un diccionario (Formato OpenAI estructurado)
-        if isinstance(msg, dict):
-            rol = msg.get("role", "")
-            contenido = msg.get("content", "")
-            
-            if rol == "system":
-                continue
-            elif rol == "user":
-                st.markdown(f"**👤 Tú:** {contenido}")
-            elif rol == "assistant":
-                st.markdown(f"**👩‍💼 Camila:** {contenido}")
-                
-        # 2. Si el mensaje es texto plano (Formato String directo)
-        elif isinstance(msg, str):
-            # Si el texto empieza con "Tú:" o "Usuario:" lo pintamos con su avatar
-            if msg.startswith("Tú:") or msg.startswith("Usuario:"):
-                st.markdown(f"**👤 {msg}**")
-            # Si empieza con "Camila:" o "Asistente:"
-            elif msg.startswith("Camila:") or msg.startswith("Asistente:"):
-                st.markdown(f"**👩‍💼 {msg}**")
-            # Por si acaso es un texto suelto sin formato
-            else:
-                st.markdown(f"{msg}")
+    # Como tu variable ya es un texto completo, lo mostramos directo
+    # Usamos un contenedor de texto amigable para que respete los saltos de línea
+    st.write(st.session_state.conversacion_texto)
