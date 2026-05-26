@@ -101,8 +101,22 @@ if st.session_state.fase == "chat":
             except Exception as e:
                 st.error(f"Hubo un problema con la API: {e}")
 
-    # Mostrar de forma elegante el transcurso de lo hablado para guía del estudiante
-    if st.session_state.conversacion_texto:
-        st.markdown("---")
-        st.caption("📝 Historial de la conversación actual (Voz transcrita):")
-        st
+# --- HISTORIAL VISUAL DE LA CONVERSACIÓN ---
+# Verificamos si hay mensajes guardados en la memoria interna
+if "messages" in st.session_state and len(st.session_state.messages) > 1:
+    st.markdown("---")
+    st.markdown("### 💬 Transcripción de la conversación:")
+    
+    # Recorremos los mensajes saltándonos el primero (que es la instrucción del sistema)
+    for msg in st.session_state.messages:
+        # Si el rol es 'system', no lo mostramos al estudiante
+        if msg["role"] == "system":
+            continue
+            
+        # Si el mensaje es del estudiante (usuario)
+        if msg["role"] == "user":
+            st.markdown(f"**👤 Tú:** {msg['content']}")
+            
+        # Si el mensaje es la respuesta de Camila (asistente)
+        elif msg["role"] == "assistant":
+            st.markdown(f"**👩‍💼 Camila:** {msg['content']}")
