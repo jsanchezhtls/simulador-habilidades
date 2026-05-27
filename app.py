@@ -21,6 +21,12 @@ st.markdown("""
     header {visibility: hidden;}
     .viewerBadge_container__1QSob {display: none !important;}
     stDecoration {display: none !important;}
+    
+    /* Oculta el botón flotante de 'Manage app' / 'Deploy' abajo a la derecha */
+    .stAppDeployButton {display: none !important;}
+    
+    /* Oculta el menú de desarrollo de los tres puntitos en móviles */
+    #stMainMenu {visibility: hidden !important; display: none !important;}
     </style>
     """, unsafe_allow_html=True)
 
