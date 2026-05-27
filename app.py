@@ -22,11 +22,19 @@ st.markdown("""
     .viewerBadge_container__1QSob {display: none !important;}
     stDecoration {display: none !important;}
     
-    /* Oculta el botón flotante de 'Manage app' / 'Deploy' abajo a la derecha */
-    .stAppDeployButton {display: none !important;}
-    
-    /* Oculta el menú de desarrollo de los tres puntitos en móviles */
-    #stMainMenu {visibility: hidden !important; display: none !important;}
+    /* Inyección global para romper el Shadow DOM y desaparecer los botones flotantes de abajo */
+    div[data-testid="stStatusWidget"],
+    .stAppDeployButton,
+    iframe[title="streamlit-modal"],
+    button[title="Manage app"],
+    #stMainMenu,
+    [data-testid="stToolbar"],
+    [data-testid="stDecoration"] {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0px !important;
+        width: 0px !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
