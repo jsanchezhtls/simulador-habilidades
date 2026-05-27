@@ -1,4 +1,3 @@
 openai
-gTTS
 streamlit-mic-recorder
-streamlit-gsheets
+st-gsheets-connection

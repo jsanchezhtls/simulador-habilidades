@@ -1,7 +1,9 @@
 import streamlit as st
 from openai import OpenAI
-from gtts import gTTS
 from streamlit_mic_recorder import mic_recorder
+from streamlit_gsheets import GSheetsConnection
+from datetime import datetime
+import pandas as pd
 import os
 
 # --- 1. CONFIGURACIÓN OCULTA PARA EL ESTUDIANTE ---
@@ -36,12 +38,14 @@ if "historial" not in st.session_state:
     st.session_state.historial = [{"role": "system", "content": PROMPT_SECRETO_CAMILA}]
     st.session_state.fase = "chat"
     st.session_state.conversacion_texto = ""
+if "reporte_final" not in st.session_state:
+    st.session_state.reporte_final = ""
 
-# --- FASE DE SIMULACIÓN POR VOZ ---
+# --- FASE 1: SIMULACIÓN POR VOZ ---
 if st.session_state.fase == "chat":
     
     st.markdown("### 🎙️ Graba tu mensaje para Camila:")
-    # Componente de micrófono gratuito que procesa el audio
+    # Componente de micrófono que procesa el audio
     audio_grabado = mic_recorder(
         start_prompt="🔴 Presiona para Hablar",
         stop_prompt="⏹️ Detener Grabación",
@@ -65,15 +69,21 @@ if st.session_state.fase == "chat":
                     )
                 
                 texto_alumno = transcripcion.text
-                st.session_state.conversacion_texto += f"**Tú:** {texto_alumno}\n\n"
+                st.session_state.conversacion_texto += f"Tú: {texto_alumno}\n\n"
                 st.session_state.historial.append({"role": "user", "content": texto_alumno})
                 
-                # Verificar si el alumno dijo "TERMINAR" en su audio
+                # Verificar si el alumno dijo "TERMINAR" en su audio para pasar a evaluación
                 if "TERMINAR" in texto_alumno.upper():
-                    st.session_state.fase = "evaluacion"
-                    st.rerun()
+                    with st.spinner("Generando reporte de evaluación final..."):
+                        response_eval = client.chat.completions.create(
+                            model="gpt-4o-mini",
+                            messages=st.session_state.historial
+                        )
+                        st.session_state.reporte_final = response_eval.choices[0].message.content
+                        st.session_state.fase = "evaluacion"
+                        st.rerun()
                 
-                # Generar respuesta de Camila
+                # Generar respuesta normal de Camila en personaje
                 with st.spinner("Camila está procesando tu respuesta..."):
                     response = client.chat.completions.create(
                         model="gpt-4o-mini",
@@ -81,37 +91,72 @@ if st.session_state.fase == "chat":
                     )
                     respuesta_camila = response.choices[0].message.content
                     st.session_state.historial.append({"role": "assistant", "content": respuesta_camila})
-                    st.session_state.conversacion_texto += f"**Camila:** {respuesta_camila}\n\n"
+                    st.session_state.conversacion_texto += f"Camila: {respuesta_camila}\n\n"
                     
-                    # Convertir respuesta de Camila a audio ultra realista con OpenAI TTS
+                    # Convertir respuesta de Camila a audio con OpenAI TTS
                     with st.spinner("Generando voz premium..."):
                         audio_response = client.audio.speech.create(
                             model="tts-1",
-                            voice="nova",  # Voz femenina, profesional y clara. Otras opciones: 'nova' o 'alloy'
+                            voice="nova",  # Voz femenina, profesional y clara
                             input=respuesta_camila,
-                            speed=1.10       # Ajusta la velocidad por defecto (1.0 es normal, 1.15 es un poco más rápido y fluido)
-                            )
+                            speed=1.10    # Velocidad un poco más rápida y fluida
+                        )
                     audio_response.write_to_file("camila_voz.mp3")
                     
                     # Reproducir automáticamente
                     st.markdown("### 🗣️ Camila dice:")
                     st.audio("camila_voz.mp3", format="audio/mp3", autoplay=True)
 
-            
             except Exception as e:
                 st.error(f"Hubo un problema con la API: {e}")
 
-# --- HISTORIAL VISUAL DE LA CONVERSACIÓN ---
-if "conversacion_texto" in st.session_state and st.session_state.conversacion_texto:
+# --- FASE 2: MOSTRAR EVALUACIÓN Y GUARDAR EN GOOGLE SHEETS ---
+elif st.session_state.fase == "evaluacion":
+    st.success("🏁 ¡Simulación Finalizada!")
+    st.markdown("## 📊 Reporte de Evaluación de Habilidades Blandas")
+    st.write(st.session_state.reporte_final)
+    
+    st.markdown("---")
+    st.markdown("#### 🚀 Guardar Reporte del Docente:")
+    
+    # Botón automático para subir todo a la nube de Google Sheets
+    if st.button("📊 Enviar conversación a Google Sheets central"):
+        with st.spinner("Guardando en la base de datos..."):
+            try:
+                # Tu hoja de cálculo real integrada y enlazada correctamente
+                url_hoja = "https://docs.google.com/spreadsheets/d/1wRZoKUEbvVfrETp7aUnjyzl9qNW99XhbGLGWocngJuQ/edit"
+                
+                conn = st.connection("gsheets", type=GSheetsConnection)
+                df_existente = conn.read(spreadsheet=url_hoja, usecols=[0, 1])
+                
+                fecha_actual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                nueva_fila = pd.DataFrame([{
+                    "Fecha": fecha_actual,
+                    "Historial_Completo": st.session_state.conversacion_texto
+                }])
+                
+                df_actualizado = pd.concat([df_existente, nueva_fila], ignore_index=True)
+                conn.update(spreadsheet=url_hoja, data=df_actualizado)
+                
+                st.success("¡Transmisión completada! La conversación ha sido registrada con éxito en 'Resultados_Simulador_Habilidades'.")
+            except Exception as e:
+                st.error(f"No se pudo registrar en la nube: {e}")
+                
+    if st.button("🔄 Reiniciar Simulador"):
+        st.session_state.clear()
+        st.rerun()
+
+# --- HISTORIAL VISUAL DE LA CONVERSACIÓN (FRONTEND LIMPIO) ---
+if st.session_state.conversacion_texto:
     st.markdown("---")
     st.markdown("### 💬 Transcripción de la conversación:")
     
-    # Tomamos el texto original
+    # Tomamos el texto original sin duplicados
     texto_con_iconos = st.session_state.conversacion_texto
     
-    # Hacemos la magia: reemplazamos los nombres por versiones con emoticones
+    # Reemplazamos los nombres por versiones estilizadas con emoticones
     texto_con_iconos = texto_con_iconos.replace("Tú:", "👤 Tú:")
     texto_con_iconos = texto_con_iconos.replace("Camila:", "👩‍💼 Camila:")
     
-    # Mostramos el texto ya transformado y estilizado
+    # Mostramos el texto ya transformado
     st.write(texto_con_iconos)
