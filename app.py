@@ -91,7 +91,8 @@ if st.session_state.fase == "chat":
             
             texto_limpio = texto_alumno.upper().replace(".", "").replace(",", "").strip()
             
-            if "TERMINAR" in texto_limpio:
+# FILTRO ESTRICTO: Solo reacciona si el alumno dijo "TERMINAR" o "TERMINADO"
+            if "TERMINAR" in texto_limpio or "TERMINADO" in texto_limpio:
                 with st.spinner("Camila está procesando el reporte de evaluación final..."):
                     response_eval = client.chat.completions.create(
                         model="gpt-4o-mini",
