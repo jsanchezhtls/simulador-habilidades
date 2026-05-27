@@ -3,6 +3,7 @@ from openai import OpenAI
 from streamlit_mic_recorder import mic_recorder
 from streamlit_gsheets import GSheetsConnection
 from datetime import datetime
+from zoneinfo import ZoneInfo
 import pandas as pd
 import os
 
@@ -207,7 +208,7 @@ elif st.session_state.fase == "evaluacion":
                 df_existente = conn.read(spreadsheet=url_hoja, usecols=[0, 1, 2, 3], ttl=0)
                 df_existente = df_existente.dropna(how="all")
                 
-                fecha_actual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                fecha_actual = datetime.now(ZoneInfo("America/Lima")).strftime("%Y-%m-%d %H:%M:%S")
                 nueva_fila = pd.DataFrame([{
                     "Fecha": fecha_actual,
                     "Caso_Evaluado": caso_seleccionado,
