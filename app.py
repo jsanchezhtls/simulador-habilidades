@@ -201,7 +201,7 @@ elif st.session_state.fase == "evaluacion":
         
         if boton_guardar:
             try:
-                url_hoja = "https://docs.google.com/spreadsheets/d/1wRZoKUEbvVfrETp7aUnjyzl9qNW99XhbGWocngJuQ/edit"
+                url_hoja = "https://docs.google.com/spreadsheets/d/1wRZoKUEbvVfrETp7aUnjyzl9qNW99XhbGLGWocngJuQ/edit?usp=sharing"
                 conn = st.connection("gsheets", type=GSheetsConnection)
                 
                 df_existente = conn.read(spreadsheet=url_hoja, usecols=[0, 1, 2, 3], ttl=0)
