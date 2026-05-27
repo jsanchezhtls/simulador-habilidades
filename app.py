@@ -7,10 +7,8 @@ import pandas as pd
 import os
 
 # --- 1. CONFIGURACIÓN OCULTA PARA EL ESTUDIANTE ---
-# Tu API Key real de OpenAI integrada correctamente
 API_KEY_OPENAI = st.secrets["OPENAI_API_KEY"]
 
-# El prompt con tus nuevas reglas métricas estrictas y disparador "COMIENZA"
 PROMPT_SECRETO_CAMILA = """
 Ponte en el rol de una persona de sexo mujer, llamada Camila, que es una estudiante universitaria triste y fastidiada pues sus compañeros de grupo están ignorando sus comentarios ya que consideran que "es muy lenta", "no entiende las explicaciones del profesor", "sus aportes son pobres". Estos comentarios son parcialmente ciertos pues Camila no ha participado mucho en el proyecto, realmente no comprende mucho del tema, pero ha dedicado esfuerzos reales para entenderlo. 
 
@@ -34,12 +32,11 @@ Saldrás del personaje de Camila y actuarás como un evaluador profesional de ha
 Justifica minuciosamente el porqué del porcentaje asignado basándote en esta regla.
 """
 
-# Inicializar cliente de OpenAI
 client = OpenAI(api_key=API_KEY_OPENAI)
 
 st.set_page_config(page_title="Evaluación de Competencias Directivas", page_icon="🎙️", layout="centered")
 
-# --- 2. INTERFAZ VISUAL DEL ALUMNO (Adaptada al nuevo caso) ---
+# --- 2. INTERFAZ VISUAL DEL ALUMNO ---
 st.title("🎙️ Simulador de Habilidades Blandas")
 st.markdown("---")
 
@@ -56,7 +53,7 @@ st.warning("""
 3. Cuando consideres que has cerrado la sesión o desees finalizar la prueba, menciona claramente la palabra **'TERMINAR'** al final de tu último mensaje.
 """)
 
-# Inicializar variables de sesión para el chat de voz
+# Inicializar variables de sesión indispensables
 if "historial" not in st.session_state:
     st.session_state.historial = [{"role": "system", "content": PROMPT_SECRETO_CAMILA}]
     st.session_state.fase = "chat"
@@ -64,9 +61,8 @@ if "historial" not in st.session_state:
 if "reporte_final" not in st.session_state:
     st.session_state.reporte_final = ""
 
-# --- FASE 1: SIMULACIÓN POR VOZ (VERSIÓN ULTRA RÁPIDA) ---
+# --- FASE 1: SIMULACIÓN POR VOZ ---
 if st.session_state.fase == "chat":
-    
     st.markdown("### 🎙️ Graba tu mensaje aquí:")
     audio_grabado = mic_recorder(
         start_prompt="🔴 Presiona para Hablar",
@@ -76,9 +72,7 @@ if st.session_state.fase == "chat":
     )
     
     if audio_grabado:
-        # Usamos contenedores visuales dinámicos para limpiar la pantalla rápido
         estado = st.empty()
-        
         try:
             with estado.container():
                 st.write("⚡ *Procesando audio de entrada...*")
@@ -105,12 +99,10 @@ if st.session_state.fase == "chat":
                     )
                     st.session_state.reporte_final = response_eval.choices[0].message.content
                     st.session_state.fase = "evaluacion"
-                    st.rerun()
+                st.rerun()
             
             else:
-                # Combinamos los spinners informativos en uno solo para reducir el lag gráfico de Streamlit
                 with st.spinner("Camila está pensando y hablando..."):
-                    # 1. Generamos la respuesta de texto con GPT-4o-mini
                     response = client.chat.completions.create(
                         model="gpt-4o-mini",
                         messages=st.session_state.historial
@@ -119,17 +111,15 @@ if st.session_state.fase == "chat":
                     st.session_state.historial.append({"role": "assistant", "content": respuesta_camila})
                     st.session_state.conversacion_texto += f"Camila: {respuesta_camila}\n\n"
                     
-                    # 2. OPTIMIZACIÓN CRÍTICA TTS: Cambiamos a formato 'aac' que codifica 3x más rápido que el mp3 convencional
                     audio_response = client.audio.speech.create(
                         model="tts-1",
                         voice="nova",
                         input=respuesta_camila,
-                        response_format="aac",  # Codificación instantánea sin compresión pesada
-                        speed=1.12             # Un toque extra de velocidad al hablar hace sentir la app más ágil
+                        response_format="aac",
+                        speed=1.12
                     )
                     audio_response.write_to_file("camila_voz.aac")
                 
-                # Renderizado inmediato de la interfaz
                 estado.empty()
                 st.markdown("### 🗣️ Camila dice:")
                 st.audio("camila_voz.aac", format="audio/aac", autoplay=True)
@@ -146,35 +136,35 @@ elif st.session_state.fase == "evaluacion":
     st.markdown("---")
     st.markdown("#### 🚀 Registro Centralizado:")
     
-    # Botón para Google Sheets
-    if st.button("📊 Enviar conversación a Google Sheets central"):
-        with st.spinner("Guardando en la base de datos..."):
-            try:
-                url_hoja = "https://docs.google.com/spreadsheets/d/1wRZoKUEbvVfrETp7aUnjyzl9qNW99XhbGLGWocngJuQ/edit"
-                
-                conn = st.connection("gsheets", type=GSheetsConnection)
-                df_existente = conn.read(spreadsheet=url_hoja, usecols=[0, 1, 2])
-                
-                fecha_actual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                
-                nueva_fila = pd.DataFrame([{
-                    "Fecha": fecha_actual,
-                    "Historial_Completo": st.session_state.conversacion_texto,
-                    "Reporte_Evaluacion": st.session_state.reporte_final
-                }])
-                
-                df_existente = df_existente.dropna(how="all")
-                df_actualizado = pd.concat([df_existente, nueva_fila], ignore_index=True)
-                conn.update(spreadsheet=url_hoja, data=df_actualizado)
-                
-                st.success("¡Transmisión completada! Los resultados del nuevo caso han sido indexados correctamente.")
-            except Exception as e:
-                st.error(f"No se pudo registrar en la nube: {e}")
-                
-    # Botón para reiniciar el caso
-    if st.button("🔄 Reiniciar Simulador"):
-        st.session_state.clear()
-        st.rerun()
+    # Creamos columnas dedicadas para los botones para que Streamlit los dibuje en paralelo y no se rompa el flujo
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        if st.button("📊 Enviar conversación a Google Sheets central", use_container_width=True):
+            with st.spinner("Guardando en la base de datos..."):
+                try:
+                    url_hoja = "https://docs.google.com/spreadsheets/d/1wRZoKUEbvVfrETp7aUnjyzl9qNW99XhbGLGWocngJuQ/edit"
+                    conn = st.connection("gsheets", type=GSheetsConnection)
+                    df_existente = conn.read(spreadsheet=url_hoja, usecols=[0, 1, 2])
+                    
+                    fecha_actual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    nueva_fila = pd.DataFrame([{
+                        "Fecha": fecha_actual,
+                        "Historial_Completo": st.session_state.conversacion_texto,
+                        "Reporte_Evaluacion": st.session_state.reporte_final
+                    }])
+                    
+                    df_existente = df_existente.dropna(how="all")
+                    df_actualizado = pd.concat([df_existente, nueva_fila], ignore_index=True)
+                    conn.update(spreadsheet=url_hoja, data=df_actualizado)
+                    st.success("¡Transmisión completada con éxito!")
+                except Exception as e:
+                    st.error(f"No se pudo registrar en la nube: {e}")
+                    
+    with col2:
+        if st.button("🔄 Reiniciar Simulador", use_container_width=True):
+            st.session_state.clear()
+            st.rerun()
 
 # --- HISTORIAL VISUAL DE LA CONVERSACIÓN ---
 if st.session_state.conversacion_texto:
