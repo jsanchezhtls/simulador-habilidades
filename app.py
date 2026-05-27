@@ -123,30 +123,33 @@ elif st.session_state.fase == "evaluacion":
     if st.button("📊 Enviar conversación a Google Sheets central"):
         with st.spinner("Guardando en la base de datos..."):
             try:
-                # Tu hoja de cálculo real integrada y enlazada correctamente
+                # Tu hoja de cálculo real integrada
                 url_hoja = "https://docs.google.com/spreadsheets/d/1wRZoKUEbvVfrETp7aUnjyzl9qNW99XhbGLGWocngJuQ/edit"
                 
+                # Conectamos y leemos las 3 columnas para asegurar la estructura limpia
                 conn = st.connection("gsheets", type=GSheetsConnection)
-                df_existente = conn.read(spreadsheet=url_hoja, usecols=[0, 1])
+                df_existente = conn.read(spreadsheet=url_hoja, usecols=[0, 1, 2])
                 
-                # UNIFICACIÓN: Juntamos la conversación del chat con el reporte final de evaluación
-                registro_completo = (
-                    f"--- TRANCRIPCIÓN DEL CHAT ---\n"
-                    f"{st.session_state.conversacion_texto}\n"
-                    f"--- REPORTE DE EVALUACIÓN FINAL ---\n"
-                    f"{st.session_state.reporte_final}"
-                )
-                
+                # Obtenemos la fecha y hora actual
                 fecha_actual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                
+                # Creamos la nueva fila asignando cada dato a su columna correspondiente
                 nueva_fila = pd.DataFrame([{
                     "Fecha": fecha_actual,
-                    "Historial_Completo": registro_completo
+                    "Historial_Completo": st.session_state.conversacion_texto,
+                    "Reporte_Evaluacion": st.session_state.reporte_final
                 }])
                 
+                # Limpiamos filas completamente vacías del dataframe existente para evitar sobreescrituras
+                df_existente = df_existente.dropna(how="all")
+                
+                # Concatenamos la nueva fila al final de la lista de alumnos
                 df_actualizado = pd.concat([df_existente, nueva_fila], ignore_index=True)
+                
+                # Subimos la base de datos actualizada a Google Sheets
                 conn.update(spreadsheet=url_hoja, data=df_actualizado)
                 
-                st.success("¡Transmisión completada! La conversación y el reporte han sido registrados con éxito en 'Resultados_Simulador_Habilidades'.")
+                st.success("¡Transmisión completada! Los datos se han organizado en columnas independientes sin alterar los registros anteriores.")
             except Exception as e:
                 st.error(f"No se pudo registrar en la nube: {e}")
                 
