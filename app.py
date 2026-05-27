@@ -128,10 +128,11 @@ st.markdown("#### 👤 Identificación del Alumno:")
 nombre_estudiante = st.text_input("Ingresa tus nombres y apellidos completos:", key="nombre_estudiante_input")
 
 st.warning(f"""
-🗣️ **Instrucciones de voz importantes:** 1. Asegúrate de escribir tu nombre completo arriba.
-2. {datos_caso["instrucciones"]}
-3. Graba tus respuestas interactivas de manera sucesiva.
-4. Cuando consideres que has cerrado la sesión o desees finalizar la prueba, menciona claramente la palabra **'TERMINAR'** o **'TERMINADO'** al final de tu último mensaje.
+🗣️ **Instrucciones de voz importantes:**
+1. 👤 **Identificación:** Asegúrate de escribir tu nombre completo arriba.
+2. 🚀 **Inicio:** {datos_caso["instrucciones"]}
+3. 🎙️ **Simulación:** Graba tus respuestas interactivas de manera sucesiva.
+4. 🏁 **Finalización:** Cuando consideres que has cerrado la sesión o desees finalizar la prueba, menciona claramente la palabra **'TERMINAR'** o **'TERMINADO'** al final de tu último mensaje.
 """)
 
 # --- FASE 1: SIMULACIÓN POR VOZ ---
