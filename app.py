@@ -91,7 +91,7 @@ if st.session_state.fase == "chat":
                 st.session_state.conversacion_texto += f"Tú: {texto_alumno}\n\n"
                 st.session_state.historial.append({"role": "user", "content": texto_alumno})
                 
-                # CORRECCIÓN DE SEGURIDAD: Limpieza de texto para asegurar que "terminar" dispare la evaluación siempre
+                # Limpieza de texto estándar para verificar detonador de cierre
                 texto_limpio = texto_alumno.upper().replace(".", "").replace(",", "").strip()
                 
                 if "TERMINAR" in texto_limpio:
@@ -102,10 +102,8 @@ if st.session_state.fase == "chat":
                         )
                         st.session_state.reporte_final = response_eval.choices[0].message.content
                         st.session_state.fase = "evaluacion"
-                        st.invalidate_pages() if hasattr(st, "invalidate_pages") else None
                         st.rerun()
                 
-                # Respuesta interactiva normal si no se detectó la palabra de cierre
                 else:
                     with st.spinner("Procesando respuesta del simulador..."):
                         response = client.chat.completions.create(
@@ -168,8 +166,7 @@ elif st.session_state.fase == "evaluacion":
                 
     # Botón para reiniciar el caso
     if st.button("🔄 Reiniciar Simulador"):
-        for key in list(st.session_state.keys()):
-            del st.session_state[key]
+        st.session_state.clear()
         st.rerun()
 
 # --- HISTORIAL VISUAL DE LA CONVERSACIÓN ---
