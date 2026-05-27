@@ -17,7 +17,7 @@ Ponte en el rol de una persona de sexo mujer, llamada Camila, que es una estudia
 Yo soy un integrante del equipo que tratará de empatizar contigo frente a esta situación, buscando comprensión del problema y de tus emociones. 
 
 DINÁMICA DE INICIO Y FIN:
-- El ejercicio iniciará formalmente cuando el alumno diga firmemente la palabra "COMIENZA". En ese momento, iniciarás el diálogo molesta, con un tono que refleje esa tristeza y fastidio acumulados.
+- El ejercicio iniciará formalmente cuando el alumno diga la palabra "COMIENZA". En ese momento, iniciarás el diálogo molesta, con un tono que refleje esa tristeza y fastidio acumulados.
 - Trata que mis respuestas no te sean tan convincentes en primera instancia, pero si logro empatizar de forma favorable tomarás mayor comprensión y apertura. Si me confundo en algo o soy insensible, me lo harás saber de forma sarcástica.
 - BAJO NINGUNA CIRCUNSTANCIA UTILICES PROFANIDADES O PALABRAS SOECES.
 - Cuando el alumno mencione claramente la palabra "TERMINAR", el ejercicio finalizará de inmediato.
@@ -91,8 +91,10 @@ if st.session_state.fase == "chat":
                 st.session_state.conversacion_texto += f"Tú: {texto_alumno}\n\n"
                 st.session_state.historial.append({"role": "user", "content": texto_alumno})
                 
-                # Verificar si el alumno solicita el cierre de la prueba
-                if "TERMINAR" in texto_alumno.upper():
+                # CORRECCIÓN DE SEGURIDAD: Limpieza de texto para asegurar que "terminar" dispare la evaluación siempre
+                texto_limpio = texto_alumno.upper().replace(".", "").replace(",", "").strip()
+                
+                if "TERMINAR" in texto_limpio:
                     with st.spinner("Camila está procesando el reporte de evaluación final con tu rúbrica..."):
                         response_eval = client.chat.completions.create(
                             model="gpt-4o-mini",
@@ -100,30 +102,32 @@ if st.session_state.fase == "chat":
                         )
                         st.session_state.reporte_final = response_eval.choices[0].message.content
                         st.session_state.fase = "evaluacion"
+                        st.invalidate_pages() if hasattr(st, "invalidate_pages") else None
                         st.rerun()
                 
-                # Respuesta interactiva normal
-                with st.spinner("Procesando respuesta del simulador..."):
-                    response = client.chat.completions.create(
-                        model="gpt-4o-mini",
-                        messages=st.session_state.historial
-                    )
-                    respuesta_camila = response.choices[0].message.content
-                    st.session_state.historial.append({"role": "assistant", "content": respuesta_camila})
-                    st.session_state.conversacion_texto += f"Camila: {respuesta_camila}\n\n"
-                    
-                    # Generación de voz con OpenAI TTS
-                    with st.spinner("Generando voz..."):
-                        audio_response = client.audio.speech.create(
-                            model="tts-1",
-                            voice="nova",
-                            input=respuesta_camila,
-                            speed=1.10
+                # Respuesta interactiva normal si no se detectó la palabra de cierre
+                else:
+                    with st.spinner("Procesando respuesta del simulador..."):
+                        response = client.chat.completions.create(
+                            model="gpt-4o-mini",
+                            messages=st.session_state.historial
                         )
-                    audio_response.write_to_file("camila_voz.mp3")
-                    
-                    st.markdown("### 🗣️ Camila dice:")
-                    st.audio("camila_voz.mp3", format="audio/mp3", autoplay=True)
+                        respuesta_camila = response.choices[0].message.content
+                        st.session_state.historial.append({"role": "assistant", "content": respuesta_camila})
+                        st.session_state.conversacion_texto += f"Camila: {respuesta_camila}\n\n"
+                        
+                        # Generación de voz con OpenAI TTS
+                        with st.spinner("Generando voz..."):
+                            audio_response = client.audio.speech.create(
+                                model="tts-1",
+                                voice="nova",
+                                input=respuesta_camila,
+                                speed=1.10
+                            )
+                        audio_response.write_to_file("camila_voz.mp3")
+                        
+                        st.markdown("### 🗣️ Camila dice:")
+                        st.audio("camila_voz.mp3", format="audio/mp3", autoplay=True)
 
             except Exception as e:
                 st.error(f"Hubo un problema con la API: {e}")
@@ -137,6 +141,7 @@ elif st.session_state.fase == "evaluacion":
     st.markdown("---")
     st.markdown("#### 🚀 Registro Centralizado:")
     
+    # Botón para Google Sheets
     if st.button("📊 Enviar conversación a Google Sheets central"):
         with st.spinner("Guardando en la base de datos..."):
             try:
@@ -161,8 +166,10 @@ elif st.session_state.fase == "evaluacion":
             except Exception as e:
                 st.error(f"No se pudo registrar en la nube: {e}")
                 
+    # Botón para reiniciar el caso
     if st.button("🔄 Reiniciar Simulador"):
-        st.session_state.clear()
+        for key in list(st.session_state.keys()):
+            del st.session_state[key]
         st.rerun()
 
 # --- HISTORIAL VISUAL DE LA CONVERSACIÓN ---
