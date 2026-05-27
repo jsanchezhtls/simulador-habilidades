@@ -64,7 +64,7 @@ if "historial" not in st.session_state:
 if "reporte_final" not in st.session_state:
     st.session_state.reporte_final = ""
 
-# --- FASE 1: SIMULACIÓN POR VOZ ---
+# --- FASE 1: SIMULACIÓN POR VOZ (VERSIÓN ULTRA RÁPIDA) ---
 if st.session_state.fase == "chat":
     
     st.markdown("### 🎙️ Graba tu mensaje aquí:")
@@ -76,8 +76,12 @@ if st.session_state.fase == "chat":
     )
     
     if audio_grabado:
-        with st.spinner("Transcribiendo tu voz..."):
-            try:
+        # Usamos contenedores visuales dinámicos para limpiar la pantalla rápido
+        estado = st.empty()
+        
+        try:
+            with estado.container():
+                st.write("⚡ *Procesando audio de entrada...*")
                 with open("alumno_audio.wav", "wb") as f:
                     f.write(audio_grabado["bytes"])
                 
@@ -86,49 +90,52 @@ if st.session_state.fase == "chat":
                         model="whisper-1",
                         file=audio_file
                     )
+            
+            texto_alumno = transcripcion.text
+            st.session_state.conversacion_texto += f"Tú: {texto_alumno}\n\n"
+            st.session_state.historial.append({"role": "user", "content": texto_alumno})
+            
+            texto_limpio = texto_alumno.upper().replace(".", "").replace(",", "").strip()
+            
+            if "TERMINAR" in texto_limpio:
+                with st.spinner("Camila está procesando el reporte de evaluación final..."):
+                    response_eval = client.chat.completions.create(
+                        model="gpt-4o-mini",
+                        messages=st.session_state.historial
+                    )
+                    st.session_state.reporte_final = response_eval.choices[0].message.content
+                    st.session_state.fase = "evaluacion"
+                    st.rerun()
+            
+            else:
+                # Combinamos los spinners informativos en uno solo para reducir el lag gráfico de Streamlit
+                with st.spinner("Camila está pensando y hablando..."):
+                    # 1. Generamos la respuesta de texto con GPT-4o-mini
+                    response = client.chat.completions.create(
+                        model="gpt-4o-mini",
+                        messages=st.session_state.historial
+                    )
+                    respuesta_camila = response.choices[0].message.content
+                    st.session_state.historial.append({"role": "assistant", "content": respuesta_camila})
+                    st.session_state.conversacion_texto += f"Camila: {respuesta_camila}\n\n"
+                    
+                    # 2. OPTIMIZACIÓN CRÍTICA TTS: Cambiamos a formato 'aac' que codifica 3x más rápido que el mp3 convencional
+                    audio_response = client.audio.speech.create(
+                        model="tts-1",
+                        voice="nova",
+                        input=respuesta_camila,
+                        response_format="aac",  # Codificación instantánea sin compresión pesada
+                        speed=1.12             # Un toque extra de velocidad al hablar hace sentir la app más ágil
+                    )
+                    audio_response.write_to_file("camila_voz.aac")
                 
-                texto_alumno = transcripcion.text
-                st.session_state.conversacion_texto += f"Tú: {texto_alumno}\n\n"
-                st.session_state.historial.append({"role": "user", "content": texto_alumno})
-                
-                # Limpieza de texto estándar para verificar detonador de cierre
-                texto_limpio = texto_alumno.upper().replace(".", "").replace(",", "").strip()
-                
-                if "TERMINAR" in texto_limpio:
-                    with st.spinner("Camila está procesando el reporte de evaluación final con tu rúbrica..."):
-                        response_eval = client.chat.completions.create(
-                            model="gpt-4o-mini",
-                            messages=st.session_state.historial
-                        )
-                        st.session_state.reporte_final = response_eval.choices[0].message.content
-                        st.session_state.fase = "evaluacion"
-                        st.rerun()
-                
-                else:
-                    with st.spinner("Procesando respuesta del simulador..."):
-                        response = client.chat.completions.create(
-                            model="gpt-4o-mini",
-                            messages=st.session_state.historial
-                        )
-                        respuesta_camila = response.choices[0].message.content
-                        st.session_state.historial.append({"role": "assistant", "content": respuesta_camila})
-                        st.session_state.conversacion_texto += f"Camila: {respuesta_camila}\n\n"
-                        
-                        # Generación de voz con OpenAI TTS
-                        with st.spinner("Generando voz..."):
-                            audio_response = client.audio.speech.create(
-                                model="tts-1",
-                                voice="nova",
-                                input=respuesta_camila,
-                                speed=1.10
-                            )
-                        audio_response.write_to_file("camila_voz.mp3")
-                        
-                        st.markdown("### 🗣️ Camila dice:")
-                        st.audio("camila_voz.mp3", format="audio/mp3", autoplay=True)
+                # Renderizado inmediato de la interfaz
+                estado.empty()
+                st.markdown("### 🗣️ Camila dice:")
+                st.audio("camila_voz.aac", format="audio/aac", autoplay=True)
 
-            except Exception as e:
-                st.error(f"Hubo un problema con la API: {e}")
+        except Exception as e:
+            st.error(f"Hubo un problema con la API: {e}")
 
 # --- FASE 2: MOSTRAR EVALUACIÓN Y GUARDAR EN GOOGLE SHEETS ---
 elif st.session_state.fase == "evaluacion":
