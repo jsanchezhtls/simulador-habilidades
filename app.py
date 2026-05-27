@@ -247,25 +247,38 @@ elif st.session_state.fase == "evaluacion":
                 url_hoja = "https://docs.google.com/spreadsheets/d/1wRZoKUEbvVfrETp7aUnjyzl9qNW99XhbGLGWocngJuQ/edit?usp=sharing"
                 conn = st.connection("gsheets", type=GSheetsConnection)
                 
-                # REVISIÓN: Ahora leemos 5 columnas (usecols=[0, 1, 2, 3, 4]) para admitir la columna 'Estudiante'
-                df_existente = conn.read(spreadsheet=url_hoja, usecols=[0, 1, 2, 3, 4], ttl=0)
+                # REVISIÓN: Ahora leemos 6 columnas (usecols=[0, 1, 2, 3, 4, 5]) para admitir la columna 'Porcentaje_Efectividad'
+                df_existente = conn.read(spreadsheet=url_hoja, usecols=[0, 1, 2, 3, 4, 5], ttl=0)
                 df_existente = df_existente.dropna(how="all")
                 
                 fecha_actual = datetime.now(ZoneInfo("America/Lima")).strftime("%Y-%m-%d %H:%M:%S")
                 
-                # NUEVO: Mapeo de la nueva fila incluyendo el campo 'Estudiante'
+                # --- NUEVO: Llamada intermedia para extraer únicamente el número ---
+                with st.spinner("Extrayendo porcentaje de efectividad para el registro central..."):
+                    proceso_nota = client.chat.completions.create(
+                        model="gpt-4o-mini",
+                        messages=[
+                            {"role": "system", "content": "Eres un asistente automatizado. Tu única tarea es leer el reporte de evaluación que te proporcionará el usuario y extraer el porcentaje de efectividad conseguido. Debes responder ÚNICAMENTE con el número seguido del símbolo '%' (por ejemplo: '85%' o '60%'). No incluyas texto adicional, ni saludos, ni explicaciones, ni puntos."},
+                            {"role": "user", "content": st.session_state.reporte_final}
+                        ]
+                    )
+                    solo_porcentaje = proceso_nota.choices[0].message.content.strip()
+                
+                # NUEVO: Mapeo de la nueva fila incluyendo 'Estudiante' y 'Porcentaje_Efectividad'
                 nueva_fila = pd.DataFrame([{
                     "Fecha": fecha_actual,
-                    "Estudiante": nombre_estudiante,
+                    "Estudiante": nombre_estudiante if nombre_estudiante else "Anónimo",
                     "Caso_Evaluado": caso_seleccionado,
                     "Historial_Completo": st.session_state.conversacion_texto,
-                    "Reporte_Evaluacion": st.session_state.reporte_final
+                    "Reporte_Evaluacion": st.session_state.reporte_final,
+                    "Porcentaje_Efectividad": solo_porcentaje  # <-- Nueva columna asignada
                 }])
                 
                 df_actualizado = pd.concat([df_existente, nueva_fila], ignore_index=True)
                 conn.update(spreadsheet=url_hoja, data=df_actualizado)
                 
-                st.success(f"¡Logrado! Los resultados de {nombre_estudiante} se guardaron correctamente en la base de datos.")
+                st.success(f"¡Logrado! Los resultados de {nombre_estudiante} se guardaron correctamente con una efectividad del {solo_porcentaje}.")
+            
             except Exception as e:
                 st.error(f"Error al escribir en la nube: {e}")
 
