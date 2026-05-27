@@ -13,7 +13,18 @@ client = OpenAI(api_key=API_KEY_OPENAI)
 
 st.set_page_config(page_title="Simulador de Habilidades Blandas", page_icon="🎙️", layout="centered")
 
-# --- 2. BANCO DE CASOS (Aquí puedes añadir todos los que quieras) ---
+# --- OCULTAR ICONO DE GITHUB, MENU DE DESARROLLO Y BARRA SUPERIOR ---
+st.markdown("""
+    <style>
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    .viewerBadge_container__1QSob {display: none !important;}
+    stDecoration {display: none !important;}
+    </style>
+    """, unsafe_allow_html=True)
+
+# --- 2. BANCO DE CASOS ---
 CASOS = {
     "Caso 1: Camila (Empatía en Equipos)": {
         "titulo_interfaz": "Caso de Estudio: Empatía y Gestión de Equipos",
@@ -36,7 +47,7 @@ DINÁMICA DE INICIO Y FIN:
 REGLAS DE EVALUACIÓN (CUANDO EL ALUMNO DIGA "TERMINAR" O "TERMINADO"):
 Saldrás por completo del personaje de Camila y te convertirás en un Director de Evaluación académica de Habilidades Blandas sumamente estricto, frío y objetivo. Tu labor es calificar el desempeño real del alumno, no su buena intención.
 
-Evalúa la conversación bajo estos criterios explícitos:
+Evalúa la conversación bajo estos criterios explicitos:
 1) ASPECTOS DE MEJORA CRÍTICOS: Considera error si el alumno minimiza tu problema, da soluciones apresuradas sin escuchar, es indiferente o justifica el aislamiento de tus compañeros.
 2) PENALIZACIONES MATEMÁTICAS INMUTABLES:
    - Si detectas 1 solo aspecto de mejora: La nota MÁXIMA admitida es 75%.
@@ -56,7 +67,7 @@ REPORTE A DEVOLVER:
 
 **Tu Objetivo:** Mantén la calma, practica la autorregulación emocional y usa la mediación asertiva. No te pongas a la defensiva; averigua qué pasó, aclara el malentendido sin escalar el conflicto y busca un acuerdo mutuo.""",
         "instrucciones": "Presiona el botón del micrófono y di claramente la palabra **'COMIENZA'** para que Renato entre a la sala a reclamarte por el informe.",
-        "voice_config": "onyx", # Voz más robusta/masculina para este personaje
+        "voice_config": "onyx",
         "nombre_personaje": "Renato",
         "prompt_sistema": """Ponte en el rol de un estudiante/trabajador llamado Renato. Estás muy molesto e indignado porque descubriste que cambiaron las conclusiones del informe final del equipo y crees firmemente que el usuario lo hizo a tus espaldas para sabotearte o hacerte quedar mal. Tu tono inicial es confrontativo, desconfiado y demandante.
 
@@ -71,7 +82,7 @@ DINÁMICA DE INICIO Y FIN:
 REGLAS DE EVALUACIÓN (CUANDO EL ALUMNO DIGA "TERMINAR" O "TERMINADO"):
 Saldrás por completo del personaje de Renato y te convertirás en un Director de Evaluación académica de Habilidades Blandas sumamente estricto, frío y objetivo.
 
-Evalúa la conversación bajo estos criterios explícitos:
+Evalúa la conversación bajo estos criterios explicitos:
 1) ASPECTOS DE MEJORA CRÍTICOS: Considera error si el alumno se puso a la defensiva, te atacó de vuelta, se mostró indiferente, no aclaró el origen del malentendido o no propuso una solución o disculpa asertiva.
 2) PENALIZACIONES MATEMÁTICAS INMUTABLES:
    - Si detectas 1 solo aspecto de mejora: La nota MÁXIMA admitida es 75%.
@@ -96,10 +107,8 @@ with st.sidebar:
     st.markdown("---")
     st.caption("Cada caso evalúa competencias directivas diferentes mediante inteligencia artificial de voz.")
 
-# Obtener datos del caso elegido
 datos_caso = CASOS[caso_seleccionado]
 
-# Si el usuario cambia de caso en el menú lateral, reiniciamos la sesión automáticamente
 if "caso_actual" not in st.session_state or st.session_state.caso_actual != caso_seleccionado:
     st.session_state.caso_actual = caso_seleccionado
     st.session_state.historial = [{"role": "system", "content": datos_caso["prompt_sistema"]}]
@@ -114,21 +123,32 @@ st.markdown("---")
 st.subheader(datos_caso["titulo_interfaz"])
 st.info(datos_caso["contexto"])
 
+# NUEVO: Input para la identificación del alumno
+st.markdown("#### 👤 Identificación del Alumno:")
+nombre_estudiante = st.text_input("Ingresa tus nombres y apellidos completos:", key="nombre_estudiante_input")
+
 st.warning(f"""
-🗣️ **Instrucciones de voz importantes:** 1. {datos_caso["instrucciones"]}
-2. Graba tus respuestas interactivas de manera sucesiva.
-3. Cuando consideres que has cerrado la sesión o desees finalizar la prueba, menciona claramente la palabra **'TERMINAR'** o **'TERMINADO'** al final de tu último mensaje.
+🗣️ **Instrucciones de voz importantes:** 1. Asegúrate de escribir tu nombre completo arriba.
+2. {datos_caso["instrucciones"]}
+3. Graba tus respuestas interactivas de manera sucesiva.
+4. Cuando consideres que has cerrado la sesión o desees finalizar la prueba, menciona claramente la palabra **'TERMINAR'** o **'TERMINADO'** al final de tu último mensaje.
 """)
 
 # --- FASE 1: SIMULACIÓN POR VOZ ---
 if st.session_state.fase == "chat":
     st.markdown("### 🎙️ Graba tu mensaje aquí:")
-    audio_grabado = mic_recorder(
-        start_prompt="🔴 Presiona para Hablar",
-        stop_prompt="⏹️ Detener Grabación",
-        key=f"grabador_{caso_seleccionado}", # Key única por caso para evitar conflictos
-        format="wav"
-    )
+    
+    # Bloqueo lógico del micrófono si el campo del nombre está vacío
+    if not nombre_estudiante.strip():
+        st.info("⚠️ Para activar el micrófono, primero debes escribir tu nombre en el cuadro de arriba.")
+        audio_grabado = None
+    else:
+        audio_grabado = mic_recorder(
+            start_prompt="🔴 Presiona para Hablar",
+            stop_prompt="⏹️ Detener Grabación",
+            key=f"grabador_{caso_seleccionado}",
+            format="wav"
+        )
     
     if audio_grabado:
         estado = st.empty()
@@ -162,6 +182,13 @@ if st.session_state.fase == "chat":
             
             else:
                 with st.spinner(f"{datos_caso['nombre_personaje']} está pensando y hablando..."):
+                    # Si es el primer mensaje interactivo, inyectamos contextualmente el nombre al sistema
+                    if len(st.session_state.historial) == 2:
+                        st.session_state.historial.append({
+                            "role": "system", 
+                            "content": f"Nota de contexto: El usuario con el que hablas es un alumno llamado {nombre_estudiante}. Puedes dirigirte a él/ella usando su nombre si lo consideras adecuado."
+                        })
+                        
                     response = client.chat.completions.create(
                         model="gpt-4o-mini",
                         messages=st.session_state.historial
@@ -196,7 +223,7 @@ elif st.session_state.fase == "evaluacion":
     st.markdown("#### 🚀 Registro Centralizado:")
     
     with st.form(key="formulario_guardado"):
-        st.write(f"Presiona el botón de abajo para consolidar tu participación del **{caso_seleccionado}** en el registro central:")
+        st.write(f"Presiona el botón de abajo para consolidar la participación de **{nombre_estudiante}** en el registro central:")
         
         boton_guardar = st.form_submit_button("📊 Enviar conversación a Google Sheets central", use_container_width=True)
         
@@ -205,12 +232,16 @@ elif st.session_state.fase == "evaluacion":
                 url_hoja = "https://docs.google.com/spreadsheets/d/1wRZoKUEbvVfrETp7aUnjyzl9qNW99XhbGLGWocngJuQ/edit?usp=sharing"
                 conn = st.connection("gsheets", type=GSheetsConnection)
                 
-                df_existente = conn.read(spreadsheet=url_hoja, usecols=[0, 1, 2, 3], ttl=0)
+                # REVISIÓN: Ahora leemos 5 columnas (usecols=[0, 1, 2, 3, 4]) para admitir la columna 'Estudiante'
+                df_existente = conn.read(spreadsheet=url_hoja, usecols=[0, 1, 2, 3, 4], ttl=0)
                 df_existente = df_existente.dropna(how="all")
                 
                 fecha_actual = datetime.now(ZoneInfo("America/Lima")).strftime("%Y-%m-%d %H:%M:%S")
+                
+                # NUEVO: Mapeo de la nueva fila incluyendo el campo 'Estudiante'
                 nueva_fila = pd.DataFrame([{
                     "Fecha": fecha_actual,
+                    "Estudiante": nombre_estudiante,
                     "Caso_Evaluado": caso_seleccionado,
                     "Historial_Completo": st.session_state.conversacion_texto,
                     "Reporte_Evaluacion": st.session_state.reporte_final
@@ -219,7 +250,7 @@ elif st.session_state.fase == "evaluacion":
                 df_actualizado = pd.concat([df_existente, nueva_fila], ignore_index=True)
                 conn.update(spreadsheet=url_hoja, data=df_actualizado)
                 
-                st.success(f"¡Logrado! Los resultados del caso se guardaron correctamente en una nueva fila acumulada.")
+                st.success(f"¡Logrado! Los resultados de {nombre_estudiante} se guardaron correctamente en la base de datos.")
             except Exception as e:
                 st.error(f"Error al escribir en la nube: {e}")
 
