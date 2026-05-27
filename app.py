@@ -136,28 +136,33 @@ elif st.session_state.fase == "evaluacion":
     st.markdown("---")
     st.markdown("#### 🚀 Registro Centralizado:")
     
-    # Creamos columnas dedicadas para los botones para que Streamlit los dibuje en paralelo y no se rompa el flujo
     col1, col2 = st.columns(2)
     
     with col1:
         if st.button("📊 Enviar conversación a Google Sheets central", use_container_width=True):
-            with st.spinner("Guardando en la base de datos..."):
+            with st.spinner("Conectando en vivo con la base de datos..."):
                 try:
                     url_hoja = "https://docs.google.com/spreadsheets/d/1wRZoKUEbvVfrETp7aUnjyzl9qNW99XhbGLGWocngJuQ/edit"
                     conn = st.connection("gsheets", type=GSheetsConnection)
-                    df_existente = conn.read(spreadsheet=url_hoja, usecols=[0, 1, 2])
+                    
+                    # MEJORA CRÍTICA: ttl=0 obliga a leer los datos reales de la nube sin usar la memoria caché vieja
+                    df_existente = conn.read(spreadsheet=url_hoja, usecols=[0, 1, 2], ttl=0)
+                    df_existente = df_existente.dropna(how="all")
                     
                     fecha_actual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    
                     nueva_fila = pd.DataFrame([{
                         "Fecha": fecha_actual,
                         "Historial_Completo": st.session_state.conversacion_texto,
                         "Reporte_Evaluacion": st.session_state.reporte_final
                     }])
                     
-                    df_existente = df_existente.dropna(how="all")
+                    # Concatenamos asegurando que se cree un renglón nuevo abajo de los existentes
                     df_actualizado = pd.concat([df_existente, nueva_fila], ignore_index=True)
+                    
+                    # Subimos todo el consolidado completo
                     conn.update(spreadsheet=url_hoja, data=df_actualizado)
-                    st.success("¡Transmisión completada con éxito!")
+                    st.success("¡Información acumulada con éxito en la lista central!")
                 except Exception as e:
                     st.error(f"No se pudo registrar en la nube: {e}")
                     
