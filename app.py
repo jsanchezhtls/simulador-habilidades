@@ -119,7 +119,7 @@ elif st.session_state.fase == "evaluacion":
     st.markdown("---")
     st.markdown("#### 🚀 Guardar Reporte del Docente:")
     
-    # Botón automático para subir todo a la nube de Google Sheets
+# Botón automático para subir todo a la nube de Google Sheets
     if st.button("📊 Enviar conversación a Google Sheets central"):
         with st.spinner("Guardando en la base de datos..."):
             try:
@@ -129,16 +129,24 @@ elif st.session_state.fase == "evaluacion":
                 conn = st.connection("gsheets", type=GSheetsConnection)
                 df_existente = conn.read(spreadsheet=url_hoja, usecols=[0, 1])
                 
+                # UNIFICACIÓN: Juntamos la conversación del chat con el reporte final de evaluación
+                registro_completo = (
+                    f"--- TRANCRIPCIÓN DEL CHAT ---\n"
+                    f"{st.session_state.conversacion_texto}\n"
+                    f"--- REPORTE DE EVALUACIÓN FINAL ---\n"
+                    f"{st.session_state.reporte_final}"
+                )
+                
                 fecha_actual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 nueva_fila = pd.DataFrame([{
                     "Fecha": fecha_actual,
-                    "Historial_Completo": st.session_state.conversacion_texto
+                    "Historial_Completo": registro_completo
                 }])
                 
                 df_actualizado = pd.concat([df_existente, nueva_fila], ignore_index=True)
                 conn.update(spreadsheet=url_hoja, data=df_actualizado)
                 
-                st.success("¡Transmisión completada! La conversación ha sido registrada con éxito en 'Resultados_Simulador_Habilidades'.")
+                st.success("¡Transmisión completada! La conversación y el reporte han sido registrados con éxito en 'Resultados_Simulador_Habilidades'.")
             except Exception as e:
                 st.error(f"No se pudo registrar en la nube: {e}")
                 
