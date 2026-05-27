@@ -61,6 +61,10 @@ DINÁMICA DE INICIO Y FIN:
 REGLAS DE EVALUACIÓN (CUANDO EL ALUMNO DIGA "TERMINAR" O "TERMINADO"):
 Saldrás por completo del personaje de Camila y te convertirás en un Director de Evaluación académica de Habilidades Blandas sumamente estricto, frío y objetivo. Tu labor es calificar el desempeño real del alumno, no su buena intención.
 
+CRITERIO DE RECHAZO CRÍTICO (PUNTUACIÓN CERO):
+- Si el alumno NO interactúa con el personaje (por ejemplo, si la conversación solo contiene 'Comienza' y 'Terminado', mensajes vacíos, o se evade por completo el caso práctico sin dialogar sobre el problema), se considerará abandono total del ejercicio.
+- En este escenario, la nota final de '**Porcentaje de Efectividad:**' DEBE ser obligatoriamente '0%'. Justifica en el reporte que no existió interacción válida para evaluar competencias.
+
 Evalúa la conversación bajo estos criterios explicitos:
 1) ASPECTOS DE MEJORA CRÍTICOS: Considera error si el alumno minimiza tu problema, da soluciones apresuradas sin escuchar, es indiferente o justifica el aislamiento de tus compañeros.
 2) PENALIZACIONES MATEMÁTICAS INMUTABLES:
@@ -70,7 +74,7 @@ Evalúa la conversación bajo estos criterios explicitos:
 
 REPORTE A DEVOLVER:
 - **Aspectos Positivos:** (Breve)
-- **Aspectos de Mejora:** (Enumerar detalladamente cada error o fallo de escucha)
+- **Aspectos de Mejoa:** (Enumerar detalladamente cada error o fallo de escucha)
 - **Recomendaciones:** (Cómo debió haber respondido)
 - **Porcentaje de Efectividad:** (Nota final justificando la regla matemática aplicada)"""
     },
@@ -95,6 +99,10 @@ DINÁMICA DE INICIO Y FIN:
 
 REGLAS DE EVALUACIÓN (CUANDO EL ALUMNO DIGA "TERMINAR" O "TERMINADO"):
 Saldrás por completo del personaje de Renato y te convertirás en un Director de Evaluación académica de Habilidades Blandas sumamente estricto, frío y objetivo.
+
+CRITERIO DE RECHAZO CRÍTICO (PUNTUACIÓN CERO):
+- Si el alumno NO interactúa con el personaje (por ejemplo, si la conversación solo contiene 'Comienza' y 'Terminado', mensajes vacíos, o se evade por completo el caso práctico sin dialogar sobre el problema), se considerará abandono total del ejercicio.
+- En este escenario, la nota final de '**Porcentaje de Efectividad:**' DEBE ser obligatoriamente '0%'. Justifica en el reporte que no existió interacción válida para evaluar competencias.
 
 Evalúa la conversación bajo estos criterios explicitos:
 1) ASPECTOS DE MEJORA CRÍTICOS: Considera error si el alumno se puso a la defensiva, te atacó de vuelta, se mostró indiferente, no aclaró el origen del malentendido o no propuso una solución o disculpa asertiva.
@@ -137,7 +145,7 @@ st.markdown("---")
 st.subheader(datos_caso["titulo_interfaz"])
 st.info(datos_caso["contexto"])
 
-# NUEVO: Input para la identificación del alumno
+# Input para la identificación del alumno
 st.markdown("#### 👤 Identificación del Alumno:")
 nombre_estudiante = st.text_input("Ingresa tus nombres y apellidos completos:", key="nombre_estudiante_input")
 
@@ -247,7 +255,7 @@ elif st.session_state.fase == "evaluacion":
                 url_hoja = "https://docs.google.com/spreadsheets/d/1wRZoKUEbvVfrETp7aUnjyzl9qNW99XhbGLGWocngJuQ/edit?usp=sharing"
                 conn = st.connection("gsheets", type=GSheetsConnection)
                 
-                # REVISIÓN: Ahora leemos 6 columnas (usecols=[0, 1, 2, 3, 4, 5]) para admitir la columna 'Porcentaje_Efectividad'
+                # REVISIÓN: Leemos las 6 columnas completas para admitir 'Porcentaje_Efectividad'
                 df_existente = conn.read(spreadsheet=url_hoja, usecols=[0, 1, 2, 3, 4, 5], ttl=0)
                 df_existente = df_existente.dropna(how="all")
                 
@@ -258,7 +266,7 @@ elif st.session_state.fase == "evaluacion":
                     proceso_nota = client.chat.completions.create(
                         model="gpt-4o-mini",
                         messages=[
-                            {"role": "system", "content": "Eres un asistente automatizado. Tu única tarea es leer el reporte de evaluación que te proporcionará el usuario y extraer el porcentaje de efectividad conseguido. Debes responder ÚNICAMENTE con el número seguido del símbolo '%' (por ejemplo: '85%' o '60%'). No incluyas texto adicional, ni saludos, ni explicaciones, ni puntos."},
+                            {"role": "system", "content": "Eres un asistente automatizado. Tu única tarea es leer el reporte de evaluación que te proporcionará el usuario y extraer el porcentaje de efectividad conseguido. Debes responder ÚNICAMENTE con el número seguido del símbolo '%' (por ejemplo: '85%' o '0%'). No incluyas texto adicional, ni saludos, ni explicaciones, ni puntos."},
                             {"role": "user", "content": st.session_state.reporte_final}
                         ]
                     )
