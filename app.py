@@ -10,9 +10,28 @@ import os
 # Tu API Key real de OpenAI integrada correctamente
 API_KEY_OPENAI = st.secrets["OPENAI_API_KEY"]
 
-# El prompt con las reglas secretas de Camila y los criterios de evaluación (PROHIBIDAS LAS PALABRAS SOECES)
+# El prompt con tus nuevas reglas métricas estrictas y disparador "COMIENZA"
 PROMPT_SECRETO_CAMILA = """
-Ponte en el rol de una persona de sexo mujer, llamada Camila, que está fastidiada y triste. Está en un equipo universitario poco organizado. Ha sido discriminada en repetidas ocasiones y se siente muy victimizada. Le han dicho frases como "es que eres muy lenta", "no entiendes las explicaciones de la profesora", "tus aportes son muy pobres", "lo hacemos nosotros o si no sacaremos mala nota". Estamos en una reunión de equipo y empezarás el diálogo molesta, con un tono de ironía y vulnerabilidad. Yo seré un integrante que tratará de empatizar contigo y buscar una solución. Trata que mis respuestas no te sean tan convincentes en primera instancia, pero si logro explicarlo de forma favorable tomarás mayor comprensión y apertura a mis respuestas. Si me confundo en algo, me lo harás saber de una forma bastante sarcástica. BAJO NINGUNA CIRCUNSTANCIA UTILICES PROFANIDADES O PALABRAS SOECES. Para iniciar el ejercicio el alumno dirá algo para saludarte. Cuando el alumno mencione firmemente la palabra "TERMINAR", el ejercicio finalizará de inmediato. En ese momento, saldrás del personaje de Camila y actuarás como un evaluador profesional de habilidades blandas. Debes redactar un reporte detallado que incluya: 1) Análisis de la escucha activa y empatía del alumno. 2) Evaluación de la claridad de sus planteamientos. 3) Un porcentaje de efectividad de 0 a 100% justificando minuciosamente el porqué de esa nota. 4) Recomendaciones puntuales con los aspectos que son necesarios de mejorar.
+Ponte en el rol de una persona de sexo mujer, llamada Camila, que es una estudiante universitaria triste y fastidiada pues sus compañeros de grupo están ignorando sus comentarios ya que consideran que "es muy lenta", "no entiende las explicaciones del profesor", "sus aportes son pobres". Estos comentarios son parcialmente ciertos pues Camila no ha participado mucho en el proyecto, realmente no comprende mucho del tema, pero ha dedicado esfuerzos reales para entenderlo. 
+
+Yo soy un integrante del equipo que tratará de empatizar contigo frente a esta situación, buscando comprensión del problema y de tus emociones. 
+
+DINÁMICA DE INICIO Y FIN:
+- El ejercicio iniciará formalmente cuando el alumno diga firmemente la palabra "COMIENZA". En ese momento, iniciarás el diálogo molesta, con un tono que refleje esa tristeza y fastidio acumulados.
+- Trata que mis respuestas no te sean tan convincentes en primera instancia, pero si logro empatizar de forma favorable tomarás mayor comprensión y apertura. Si me confundo en algo o soy insensible, me lo harás saber de forma sarcástica.
+- BAJO NINGUNA CIRCUNSTANCIA UTILICES PROFANIDADES O PALABRAS SOECES.
+- Cuando el alumno mencione claramente la palabra "TERMINAR", el ejercicio finalizará de inmediato.
+
+REGLAS DE EVALUACIÓN (CUANDO EL ALUMNO DIGA "TERMINAR"):
+Saldrás del personaje de Camila y actuarás como un evaluador profesional de habilidades blandas de manera objetiva. Debes redactar un reporte detallado que incluya:
+1) Aspectos positivos observados en mis respuestas (validación emocional, escucha activa, etc.).
+2) Aspectos de mejora detectados minuciosamente.
+3) Recomendaciones puntuales para afinar la respuesta empática en el futuro.
+4) Porcentaje de efectividad de 0 a 100% que DEBE regirse estrictamente bajo estas penalizaciones matemáticas:
+   - Si detectas más de 1 aspecto de mejora, la nota NO puede ser superior al 75%.
+   - Si detectas más de 3 aspectos de mejora, la nota NO puede ser superior al 50%.
+   - Si detectas demasiados aspectos de mejora (insensibilidad extrema, nula escucha), la nota NO puede ser superior al 20%.
+Justifica minuciosamente el porqué del porcentaje asignado basándote en esta regla.
 """
 
 # Inicializar cliente de OpenAI
@@ -20,18 +39,22 @@ client = OpenAI(api_key=API_KEY_OPENAI)
 
 st.set_page_config(page_title="Evaluación de Competencias Directivas", page_icon="🎙️", layout="centered")
 
-# --- 2. INTERFAZ VISUAL DEL ALUMNO (Lo único que él puede ver) ---
+# --- 2. INTERFAZ VISUAL DEL ALUMNO (Adaptada al nuevo caso) ---
 st.title("🎙️ Simulador de Habilidades Blandas")
 st.markdown("---")
 
-st.subheader("Caso de Estudio: Mediación y Manejo de Conflictos")
+st.subheader("Caso de Estudio: Empatía y Gestión de Equipos")
 st.info("""
-**Contexto del caso:** Te encuentras en una reunión de grupo de la universidad para coordinar la entrega final. El ambiente está bastante tenso. Tu compañera Camila se encuentra visiblemente afectada, molesta y a la defensiva debido a comentarios excluyentes que recibió anteriormente en el equipo.
+**Contexto del caso:** Te encuentras en una reunión con tu compañera de grupo, Camila. Ella se encuentra visiblemente triste y fastidiada porque siente que el resto del equipo ignora sus comentarios, catalogándola de "lenta" y diciendo que sus aportes son "pobres". Es verdad que ella no ha participado mucho y le cuesta el tema, pero genuinamente se está esforzando por entenderlo.
 
-**Tu Objetivo:** Utiliza tu empatía, escucha activa y asertividad para conversar con ella, disminuir la tensión del conflicto y guiar la situación hacia una solución colaborativa.
+**Tu Objetivo:** Conversa con ella. Utiliza tu capacidad de escucha activa y asertividad para comprender la raíz del problema, validar sus emociones y demostrar una respuesta verdaderamente empática ante su frustración.
 """)
 
-st.warning("🗣️ **Instrucciones de voz:** Presiona el botón del micrófono para empezar a grabar tu respuesta. Cuando consideres que has cerrado la negociación con éxito o desees finalizar la prueba, menciona claramente la palabra **'TERMINAR'** al final de tu mensaje.")
+st.warning("""
+🗣️ **Instrucciones de voz importantes:** 1. Presiona el botón del micrófono y di claramente la palabra **'COMIENZA'** para activar el ejercicio e iniciar el diálogo con Camila.
+2. Graba tus respuestas interactivas de manera sucesiva.
+3. Cuando consideres que has cerrado la sesión o desees finalizar la prueba, menciona claramente la palabra **'TERMINAR'** al final de tu último mensaje.
+""")
 
 # Inicializar variables de sesión para el chat de voz
 if "historial" not in st.session_state:
@@ -44,8 +67,7 @@ if "reporte_final" not in st.session_state:
 # --- FASE 1: SIMULACIÓN POR VOZ ---
 if st.session_state.fase == "chat":
     
-    st.markdown("### 🎙️ Graba tu mensaje para Camila:")
-    # Componente de micrófono que procesa el audio
+    st.markdown("### 🎙️ Graba tu mensaje aquí:")
     audio_grabado = mic_recorder(
         start_prompt="🔴 Presiona para Hablar",
         stop_prompt="⏹️ Detener Grabación",
@@ -54,14 +76,11 @@ if st.session_state.fase == "chat":
     )
     
     if audio_grabado:
-        # Enviar el audio grabado a la API de OpenAI para transcribirlo a texto (Whisper)
         with st.spinner("Transcribiendo tu voz..."):
             try:
-                # Guardar temporalmente el archivo de audio del alumno
                 with open("alumno_audio.wav", "wb") as f:
                     f.write(audio_grabado["bytes"])
                 
-                # Transcribir usando OpenAI
                 with open("alumno_audio.wav", "rb") as audio_file:
                     transcripcion = client.audio.transcriptions.create(
                         model="whisper-1",
@@ -72,9 +91,9 @@ if st.session_state.fase == "chat":
                 st.session_state.conversacion_texto += f"Tú: {texto_alumno}\n\n"
                 st.session_state.historial.append({"role": "user", "content": texto_alumno})
                 
-                # Verificar si el alumno dijo "TERMINAR" en su audio para pasar a evaluación
+                # Verificar si el alumno solicita el cierre de la prueba
                 if "TERMINAR" in texto_alumno.upper():
-                    with st.spinner("Generando reporte de evaluación final..."):
+                    with st.spinner("Camila está procesando el reporte de evaluación final con tu rúbrica..."):
                         response_eval = client.chat.completions.create(
                             model="gpt-4o-mini",
                             messages=st.session_state.historial
@@ -83,8 +102,8 @@ if st.session_state.fase == "chat":
                         st.session_state.fase = "evaluacion"
                         st.rerun()
                 
-                # Generar respuesta normal de Camila en personaje
-                with st.spinner("Camila está procesando tu respuesta..."):
+                # Respuesta interactiva normal
+                with st.spinner("Procesando respuesta del simulador..."):
                     response = client.chat.completions.create(
                         model="gpt-4o-mini",
                         messages=st.session_state.historial
@@ -93,17 +112,16 @@ if st.session_state.fase == "chat":
                     st.session_state.historial.append({"role": "assistant", "content": respuesta_camila})
                     st.session_state.conversacion_texto += f"Camila: {respuesta_camila}\n\n"
                     
-                    # Convertir respuesta de Camila a audio con OpenAI TTS
-                    with st.spinner("Generando voz premium..."):
+                    # Generación de voz con OpenAI TTS
+                    with st.spinner("Generando voz..."):
                         audio_response = client.audio.speech.create(
                             model="tts-1",
-                            voice="nova",  # Voz femenina, profesional y clara
+                            voice="nova",
                             input=respuesta_camila,
-                            speed=1.10    # Velocidad un poco más rápida y fluida
+                            speed=1.10
                         )
                     audio_response.write_to_file("camila_voz.mp3")
                     
-                    # Reproducir automáticamente
                     st.markdown("### 🗣️ Camila dice:")
                     st.audio("camila_voz.mp3", format="audio/mp3", autoplay=True)
 
@@ -113,43 +131,33 @@ if st.session_state.fase == "chat":
 # --- FASE 2: MOSTRAR EVALUACIÓN Y GUARDAR EN GOOGLE SHEETS ---
 elif st.session_state.fase == "evaluacion":
     st.success("🏁 ¡Simulación Finalizada!")
-    st.markdown("## 📊 Reporte de Evaluación de Habilidades Blandas")
+    st.markdown("## 📊 Reporte de Evaluación de Respuesta Empática")
     st.write(st.session_state.reporte_final)
     
     st.markdown("---")
-    st.markdown("#### 🚀 Guardar Reporte del Docente:")
+    st.markdown("#### 🚀 Registro Centralizado:")
     
-# Botón automático para subir todo a la nube de Google Sheets
     if st.button("📊 Enviar conversación a Google Sheets central"):
         with st.spinner("Guardando en la base de datos..."):
             try:
-                # Tu hoja de cálculo real integrada
                 url_hoja = "https://docs.google.com/spreadsheets/d/1wRZoKUEbvVfrETp7aUnjyzl9qNW99XhbGLGWocngJuQ/edit"
                 
-                # Conectamos y leemos las 3 columnas para asegurar la estructura limpia
                 conn = st.connection("gsheets", type=GSheetsConnection)
                 df_existente = conn.read(spreadsheet=url_hoja, usecols=[0, 1, 2])
                 
-                # Obtenemos la fecha y hora actual
                 fecha_actual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 
-                # Creamos la nueva fila asignando cada dato a su columna correspondiente
                 nueva_fila = pd.DataFrame([{
                     "Fecha": fecha_actual,
                     "Historial_Completo": st.session_state.conversacion_texto,
                     "Reporte_Evaluacion": st.session_state.reporte_final
                 }])
                 
-                # Limpiamos filas completamente vacías del dataframe existente para evitar sobreescrituras
                 df_existente = df_existente.dropna(how="all")
-                
-                # Concatenamos la nueva fila al final de la lista de alumnos
                 df_actualizado = pd.concat([df_existente, nueva_fila], ignore_index=True)
-                
-                # Subimos la base de datos actualizada a Google Sheets
                 conn.update(spreadsheet=url_hoja, data=df_actualizado)
                 
-                st.success("¡Transmisión completada! Los datos se han organizado en columnas independientes sin alterar los registros anteriores.")
+                st.success("¡Transmisión completada! Los resultados del nuevo caso han sido indexados correctamente.")
             except Exception as e:
                 st.error(f"No se pudo registrar en la nube: {e}")
                 
@@ -157,17 +165,13 @@ elif st.session_state.fase == "evaluacion":
         st.session_state.clear()
         st.rerun()
 
-# --- HISTORIAL VISUAL DE LA CONVERSACIÓN (FRONTEND LIMPIO) ---
+# --- HISTORIAL VISUAL DE LA CONVERSACIÓN ---
 if st.session_state.conversacion_texto:
     st.markdown("---")
     st.markdown("### 💬 Transcripción de la conversación:")
     
-    # Tomamos el texto original sin duplicados
     texto_con_iconos = st.session_state.conversacion_texto
+    texto_con_iconos = texto_con_iconos.replace("Tú:", "👤 **Tú:**")
+    texto_con_iconos = texto_con_iconos.replace("Camila:", "👩‍💼 **Camila:**")
     
-    # Reemplazamos los nombres por versiones estilizadas con emoticones
-    texto_con_iconos = texto_con_iconos.replace("Tú:", "👤 Tú:")
-    texto_con_iconos = texto_con_iconos.replace("Camila:", "👩‍💼 Camila:")
-    
-    # Mostramos el texto ya transformado
-    st.write(texto_con_iconos)
+    st.markdown(texto_con_iconos)
