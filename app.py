@@ -53,7 +53,7 @@ st.warning("""
 3. Cuando consideres que has cerrado la sesión o desees finalizar la prueba, menciona claramente la palabra **'TERMINAR'** al final de tu último mensaje.
 """)
 
-# Inicializar variables de sesión indispensables
+# Inicializar variables de sesión esenciales
 if "historial" not in st.session_state:
     st.session_state.historial = [{"role": "system", "content": PROMPT_SECRETO_CAMILA}]
     st.session_state.fase = "chat"
@@ -127,7 +127,7 @@ if st.session_state.fase == "chat":
         except Exception as e:
             st.error(f"Hubo un problema con la API: {e}")
 
-# --- FASE 2: MOSTRAR EVALUACIÓN Y GUARDAR EN GOOGLE SHEETS ---
+# --- FASE 2: MOSTRAR EVALUACIÓN FIJA EN FORMULARIO (MÁXIMA ESTABILIDAD) ---
 elif st.session_state.fase == "evaluacion":
     st.success("🏁 ¡Simulación Finalizada!")
     st.markdown("## 📊 Reporte de Evaluación de Respuesta Empática")
@@ -136,40 +136,41 @@ elif st.session_state.fase == "evaluacion":
     st.markdown("---")
     st.markdown("#### 🚀 Registro Centralizado:")
     
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        if st.button("📊 Enviar conversación a Google Sheets central", use_container_width=True):
-            with st.spinner("Conectando en vivo con la base de datos..."):
-                try:
-                    url_hoja = "https://docs.google.com/spreadsheets/d/1wRZoKUEbvVfrETp7aUnjyzl9qNW99XhbGLGWocngJuQ/edit"
-                    conn = st.connection("gsheets", type=GSheetsConnection)
-                    
-                    # MEJORA CRÍTICA: ttl=0 obliga a leer los datos reales de la nube sin usar la memoria caché vieja
-                    df_existente = conn.read(spreadsheet=url_hoja, usecols=[0, 1, 2], ttl=0)
-                    df_existente = df_existente.dropna(how="all")
-                    
-                    fecha_actual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    
-                    nueva_fila = pd.DataFrame([{
-                        "Fecha": fecha_actual,
-                        "Historial_Completo": st.session_state.conversacion_texto,
-                        "Reporte_Evaluacion": st.session_state.reporte_final
-                    }])
-                    
-                    # Concatenamos asegurando que se cree un renglón nuevo abajo de los existentes
-                    df_actualizado = pd.concat([df_existente, nueva_fila], ignore_index=True)
-                    
-                    # Subimos todo el consolidado completo
-                    conn.update(spreadsheet=url_hoja, data=df_actualizado)
-                    st.success("¡Información acumulada con éxito en la lista central!")
-                except Exception as e:
-                    st.error(f"No se pudo registrar en la nube: {e}")
-                    
-    with col2:
-        if st.button("🔄 Reiniciar Simulador", use_container_width=True):
-            st.session_state.clear()
-            st.rerun()
+    # Encapsulamos la acción en un formulario físico. Esto obliga a Streamlit a pintar los botones sí o sí
+    with st.form(key="formulario_guardado"):
+        st.write("Presiona el botón de abajo para consolidar tu participación en el registro central:")
+        
+        # Botón de envío del formulario
+        boton_guardar = st.form_submit_button("📊 Enviar conversación a Google Sheets central", use_container_width=True)
+        
+        if boton_guardar:
+            try:
+                url_hoja = "https://docs.google.com/spreadsheets/d/1wRZoKUEbvVfrETp7aUnjyzl9qNW99XhbGLGWocngJuQ/edit"
+                conn = st.connection("gsheets", type=GSheetsConnection)
+                
+                # Leemos en vivo rompiendo caché
+                df_existente = conn.read(spreadsheet=url_hoja, usecols=[0, 1, 2], ttl=0)
+                df_existente = df_existente.dropna(how="all")
+                
+                fecha_actual = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                nueva_fila = pd.DataFrame([{
+                    "Fecha": fecha_actual,
+                    "Historial_Completo": st.session_state.conversacion_texto,
+                    "Reporte_Evaluacion": st.session_state.reporte_final
+                }])
+                
+                # Unimos creando el acumulado perfecto hacia abajo
+                df_actualizado = pd.concat([df_existente, nueva_fila], ignore_index=True)
+                conn.update(spreadsheet=url_hoja, data=df_actualizado)
+                
+                st.success("¡Logrado! Tus datos se guardaron y se creará un acumulado limpio en la fila siguiente.")
+            except Exception as e:
+                st.error(f"Error al escribir en la nube: {e}")
+
+    # Botón de reinicio independiente fuera del formulario
+    if st.button("🔄 Reiniciar Simulador para nuevo alumno", use_container_width=True):
+        st.session_state.clear()
+        st.rerun()
 
 # --- HISTORIAL VISUAL DE LA CONVERSACIÓN ---
 if st.session_state.conversacion_texto:
