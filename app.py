@@ -16,8 +16,31 @@ st.set_page_config(page_title="Simulador de Habilidades Blandas", page_icon="�
 # --- OCULTAR ICONO DE GITHUB, MENU DE DESARROLLO Y BARRA SUPERIOR ---
 st.markdown("""
     <style>
+    /* 1. Oculta la barra decorativa superior, el footer y el menú nativo de 3 puntos */
+    header {visibility: hidden;}
+    footer {visibility: hidden;}
+    #MainMenu {visibility: hidden;}
+    
+    /* 2. Borra específicamente los botones de la derecha (Fork, GitHub, etc.) */
+    .stAppDeployButton,
+    button[title="Manage app"],
+    iframe[title="streamlit-modal"] {
+        display: none !important;
+    }
+    
+    /* 3. Borra el pequeño eslabón/vínculo que aparece al costado del título */
+    .viewerBadge_container__1QSob,
+    .st-emotion-cache-6awft0 a {
+        display: none !important;
+    }
+    
+    /* 4. BLINDAJE CRÍTICO: Asegura que el botón de despliegue izquierdo sea siempre visible */
+    button[data-testid="stSidebarCollapseButton"] {
+        display: flex !important;
+        visibility: visible !important;
+    }
+    </style>
     """, unsafe_allow_html=True)
-
 # --- 2. BANCO DE CASOS ---
 CASOS = {
     "Caso 1: Camila (Empatía en Equipos)": {
