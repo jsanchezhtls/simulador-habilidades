@@ -16,33 +16,6 @@ st.set_page_config(page_title="Simulador de Habilidades Blandas", page_icon="�
 # --- OCULTAR ICONO DE GITHUB, MENU DE DESARROLLO Y BARRA SUPERIOR ---
 st.markdown("""
     <style>
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-    .viewerBadge_container__1QSob {display: none !important;}
-    stDecoration {display: none !important;}
-    
-    /* Inyección global para romper el Shadow DOM y desaparecer los botones flotantes de abajo */
-    div[data-testid="stStatusWidget"],
-    .stAppDeployButton,
-    iframe[title="streamlit-modal"],
-    button[title="Manage app"],
-    #stMainMenu,
-    [data-testid="stToolbar"],
-    [data-testid="stDecoration"] {
-        display: none !important;
-        visibility: hidden !important;
-        height: 0px !important;
-        width: 0px !important;
-    }
-    
-    /* REGLA NUEVA: Rescata exclusivamente el botón del menú lateral en móviles */
-    button[data-testid="stSidebarCollapseButton"] {
-        display: flex !important;
-        visibility: visible !important;
-        background-color: transparent !important;
-    }
-    </style>
     """, unsafe_allow_html=True)
 
 # --- 2. BANCO DE CASOS ---
