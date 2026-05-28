@@ -35,6 +35,13 @@ st.markdown("""
         height: 0px !important;
         width: 0px !important;
     }
+    
+    /* REGLA NUEVA: Rescata exclusivamente el botón del menú lateral en móviles */
+    button[data-testid="stSidebarCollapseButton"] {
+        display: flex !important;
+        visibility: visible !important;
+        background-color: transparent !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
