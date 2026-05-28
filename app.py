@@ -13,31 +13,27 @@ client = OpenAI(api_key=API_KEY_OPENAI)
 
 st.set_page_config(page_title="Simulador de Habilidades Blandas", page_icon="🎙️", layout="centered")
 
-# --- OCULTAR ICONO DE GITHUB, MENU DE DESARROLLO Y BARRA SUPERIOR ---
+# --- OCULTAR ELEMENTOS DERECHOS DEJANDO EL BOTÓN IZQUIERDO INTACTO ---
 st.markdown("""
     <style>
-    /* 1. Oculta la barra decorativa superior, el footer y el menú nativo de 3 puntos */
-    header {visibility: hidden;}
-    footer {visibility: hidden;}
-    #MainMenu {visibility: hidden;}
-    
-    /* 2. Borra específicamente los botones de la derecha (Fork, GitHub, etc.) */
-    .stAppDeployButton,
-    button[title="Manage app"],
+    /* 1. Oculta el menú nativo de 3 puntos y el botón de Deploy/Fork de la derecha */
+    #stMainMenu, 
+    .stAppDeployButton, 
+    button[title="Manage app"], 
     iframe[title="streamlit-modal"] {
         display: none !important;
+        visibility: hidden !important;
     }
     
-    /* 3. Borra el pequeño eslabón/vínculo que aparece al costado del título */
-    .viewerBadge_container__1QSob,
+    /* 2. Oculta el pie de página de Streamlit */
+    footer {
+        visibility: hidden !important;
+    }
+    
+    /* 3. Elimina el enlace/icono de GitHub al costado del título */
+    .viewerBadge_container__1QSob, 
     .st-emotion-cache-6awft0 a {
         display: none !important;
-    }
-    
-    /* 4. BLINDAJE CRÍTICO: Asegura que el botón de despliegue izquierdo sea siempre visible */
-    button[data-testid="stSidebarCollapseButton"] {
-        display: flex !important;
-        visibility: visible !important;
     }
     </style>
     """, unsafe_allow_html=True)
