@@ -37,6 +37,7 @@ st.markdown("""
     }
     </style>
     """, unsafe_allow_html=True)
+
 # --- 2. BANCO DE CASOS ---
 CASOS = {
     "Caso 1: Camila (Empatía en Equipos)": {
@@ -62,7 +63,7 @@ Saldrás por completo del personaje de Camila y te convertirás en un Director d
 
 CRITERIO DE RECHAZO CRÍTICO (PUNTUACIÓN CERO):
 - Si el alumno NO interactúa con el personaje (por ejemplo, si la conversación solo contiene 'Comienza' y 'Terminado', mensajes vacíos, o se evade por completo el caso práctico sin dialogar sobre el problema), se considerará abandono total del ejercicio.
-- En este escenario, la nota final de '**Porcentaje de Efectividad:**' DEBE ser obligatoriamente '0%'. Justifica en el reporte que no existió interacción válida para evaluar competencias.
+- En este escenario, la nota final de 'Porcentaje de Efectividad:' DEBE ser obligatoriamente '0%'. Justifica en el reporte que no existió interacción válida para evaluar competencias.
 
 Evalúa la conversación bajo estos criterios explicitos:
 1) ASPECTOS DE MEJORA CRÍTICOS: Considera error si el alumno minimiza tu problema, da soluciones apresuradas sin escuchar, es indiferente o justifica el aislamiento de tus compañeros.
@@ -73,7 +74,7 @@ Evalúa la conversación bajo estos criterios explicitos:
 
 REPORTE A DEVOLVER:
 - **Aspectos Positivos:** (Breve)
-- **Aspectos de Mejoa:** (Enumerar detalladamente cada error o fallo de escucha)
+- **Aspectos de Mejora:** (Enumerar detalladamente cada error o fallo de escucha)
 - **Recomendaciones:** (Cómo debió haber respondido)
 - **Porcentaje de Efectividad:** (Nota final justificando la regla matemática aplicada)"""
     },
@@ -101,7 +102,7 @@ Saldrás por completo del personaje de Renato y te convertirás en un Director d
 
 CRITERIO DE RECHAZO CRÍTICO (PUNTUACIÓN CERO):
 - Si el alumno NO interactúa con el personaje (por ejemplo, si la conversación solo contiene 'Comienza' y 'Terminado', mensajes vacíos, o se evade por completo el caso práctico sin dialogar sobre el problema), se considerará abandono total del ejercicio.
-- En este escenario, la nota final de '**Porcentaje de Efectividad:**' DEBE ser obligatoriamente '0%'. Justifica en el reporte que no existió interacción válida para evaluar competencias.
+- En este escenario, la nota final de 'Porcentaje de Efectividad:' DEBE ser obligatoriamente '0%'. Justifica en el reporte que no existió interacción válida para evaluar competencias.
 
 Evalúa la conversación bajo estos criterios explicitos:
 1) ASPECTOS DE MEJORA CRÍTICOS: Considera error si el alumno se puso a la defensiva, te atacó de vuelta, se mostró indiferente, no aclaró el origen del malentendido o no propuso una solución o disculpa asertiva.
@@ -144,13 +145,23 @@ st.markdown("---")
 st.subheader(datos_caso["titulo_interfaz"])
 st.info(datos_caso["contexto"])
 
-# Input para la identificación del alumno
-st.markdown("#### 👤 Identificación del Alumno:")
-nombre_estudiante = st.text_input("Ingresa tus nombres y apellidos completos:", key="nombre_estudiante_input")
+# MODIFICADO: Bloque lado a lado para Alumno y Selección de Docente
+st.markdown("#### 👤 Datos de la Sesión:")
+col_alumno, col_docente = st.columns(2)
+
+with col_alumno:
+    nombre_estudiante = st.text_input("Ingresa tus nombres y apellidos completos:", key="nombre_estudiante_input")
+
+with col_docente:
+    docente_seleccionado = st.selectbox(
+        "Selecciona tu docente:",
+        ["profesor uno", "profesor dos", "profesor tres"],
+        key="docente_seleccionado_input"
+    )
 
 st.warning(f"""
 🗣️ **Instrucciones de voz importantes:**
-1. 👤 **Identificación:** Asegúrate de escribir tu nombre completo arriba.
+1. 👤 **Identificación:** Asegúrate de escribir tu nombre completo arriba y elegir a tu docente.
 2. 🚀 **Inicio:** {datos_caso["instrucciones"]}
 3. 🎙️ **Simulación:** Graba tus respuestas interactivas de manera sucesiva.
 4. 🏁 **Finalización:** Cuando consideres que has cerrado la sesión o desees finalizar la prueba, menciona claramente la palabra **'TERMINAR'** o **'TERMINADO'** al final de tu último mensaje.
@@ -204,7 +215,6 @@ if st.session_state.fase == "chat":
             
             else:
                 with st.spinner(f"{datos_caso['nombre_personaje']} está pensando y hablando..."):
-                    # Si es el primer mensaje interactivo, inyectamos contextualmente el nombre al sistema
                     if len(st.session_state.historial) == 2:
                         st.session_state.historial.append({
                             "role": "system", 
@@ -245,7 +255,8 @@ elif st.session_state.fase == "evaluacion":
     st.markdown("#### 🚀 Registro Centralizado:")
     
     with st.form(key="formulario_guardado"):
-        st.write(f"Presiona el botón de abajo para consolidar la participación de **{nombre_estudiante}** en el registro central:")
+        # MODIFICADO: Muestra visualmente qué alumno y qué docente se consolidarán
+        st.write(f"Presiona el botón de abajo para consolidar la participación de **{nombre_estudiante}** evaluado por **{docente_seleccionado}** en el registro central:")
         
         boton_guardar = st.form_submit_button("📊 Enviar conversación a Google Sheets central", use_container_width=True)
         
@@ -254,13 +265,12 @@ elif st.session_state.fase == "evaluacion":
                 url_hoja = "https://docs.google.com/spreadsheets/d/1wRZoKUEbvVfrETp7aUnjyzl9qNW99XhbGLGWocngJuQ/edit?usp=sharing"
                 conn = st.connection("gsheets", type=GSheetsConnection)
                 
-                # REVISIÓN: Leemos las 6 columnas completas para admitir 'Porcentaje_Efectividad'
-                df_existente = conn.read(spreadsheet=url_hoja, usecols=[0, 1, 2, 3, 4, 5], ttl=0)
+                # MODIFICADO: Ahora lee 7 columnas continuas [0, 1, 2, 3, 4, 5, 6] correspondientes de la A a la G
+                df_existente = conn.read(spreadsheet=url_hoja, usecols=[0, 1, 2, 3, 4, 5, 6], ttl=0)
                 df_existente = df_existente.dropna(how="all")
                 
                 fecha_actual = datetime.now(ZoneInfo("America/Lima")).strftime("%Y-%m-%d %H:%M:%S")
                 
-                # --- NUEVO: Llamada intermedia para extraer únicamente el número ---
                 with st.spinner("Extrayendo porcentaje de efectividad para el registro central..."):
                     proceso_nota = client.chat.completions.create(
                         model="gpt-4o-mini",
@@ -271,20 +281,21 @@ elif st.session_state.fase == "evaluacion":
                     )
                     solo_porcentaje = proceso_nota.choices[0].message.content.strip()
                 
-                # NUEVO: Mapeo de la nueva fila incluyendo 'Estudiante' y 'Porcentaje_Efectividad'
+                # MODIFICADO: Inserción estructurada mapeando la nueva columna "Docente"
                 nueva_fila = pd.DataFrame([{
                     "Fecha": fecha_actual,
                     "Estudiante": nombre_estudiante if nombre_estudiante else "Anónimo",
+                    "Docente": docente_seleccionado,  # <-- NUEVA COLUMNA ASIGNADA
                     "Caso_Evaluado": caso_seleccionado,
                     "Historial_Completo": st.session_state.conversacion_texto,
                     "Reporte_Evaluacion": st.session_state.reporte_final,
-                    "Porcentaje_Efectividad": solo_porcentaje  # <-- Nueva columna asignada
+                    "Porcentaje_Efectividad": solo_porcentaje
                 }])
                 
                 df_actualizado = pd.concat([df_existente, nueva_fila], ignore_index=True)
                 conn.update(spreadsheet=url_hoja, data=df_actualizado)
                 
-                st.success(f"¡Logrado! Los resultados de {nombre_estudiante} se guardaron correctamente con una efectividad del {solo_porcentaje}.")
+                st.success(f"¡Logrado! Los resultados de {nombre_estudiante} se guardaron correctamente asignados a {docente_seleccionado} con una efectividad del {solo_porcentaje}.")
             
             except Exception as e:
                 st.error(f"Error al escribir en la nube: {e}")
