@@ -135,8 +135,15 @@ REPORTE A DEVOLVER:
 
 # --- 3. SELECCIÓN DE CASO DESDE LA BARRA LATERAL ---
 with st.sidebar:
-    # 🏛️ URL REAL DE TOULOUSE LAUTREC ASIGNADA CON UN ANCHO DISCRETO (130px)
-    st.image("https://www.toulouselautrec.edu.pe/sites/default/files/logo/logo-principal%402x.png", width=130)
+    # 🏛️ ALINEACIÓN AL MARGEN DERECHO UTILIZANDO HTML INYECTADO
+    st.markdown(
+        """
+        <div style="display: flex; justify-content: flex-end; margin-bottom: 0px; width: 100%;">
+            <img src="https://www.toulouselautrec.edu.pe/sites/default/files/logo/logo-principal%402x.png" width="130">
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
     
     st.header("🧠 Centro de Simulación")
     caso_seleccionado = st.selectbox(
