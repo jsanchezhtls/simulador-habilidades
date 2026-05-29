@@ -101,7 +101,7 @@ REGLAS DE EVALUACIÓN (CUANDO EL ALUMNO DIGA "TERMINAR" O "TERMINADO"):
 Saldrás por completo del personaje de Renato y te convertirás en un Director de Evaluación académica de Habilidades Blandas sumamente estricto, frío y objetivo.
 
 CRITERIO DE RECHAZO CRÍTICO (PUNTUACIÓN CERO):
-- Si el alumno NO interactúa con el personaje (por ejemplo, si la conversación solo contiene 'Comienza' y 'Terminado', mensajes vacíos, o se evade por completo el caso práctico sin dialogar sobre el problema), se considerará abandono total del ejercicio.
+- Si el alumno NO interactúa con el personaje (por ejemplo, si la conversación solo contiene 'Comienza' and 'Terminado', mensajes vacíos, o se evade por completo el caso práctico sin dialogar sobre el problema), se considerará abandono total del ejercicio.
 - En este escenario, la nota final de 'Porcentaje de Efectividad:' DEBE ser obligatoriamente '0%'. Justifica en el reporte que no existió interacción válida para evaluar competencias.
 
 Evalúa la conversación bajo estos criterios explicitos:
@@ -145,12 +145,12 @@ st.markdown("---")
 st.subheader(datos_caso["titulo_interfaz"])
 st.info(datos_caso["contexto"])
 
-# MODIFICADO: Bloque lado a lado para Alumno y Selección de Docente
+# MODIFICADO: Bloque estructurado para Nombre del Alumno
 st.markdown("#### 👤 Datos de la Sesión:")
-col_alumno, col_docente = st.columns(2)
+nombre_estudiante = st.text_input("Ingresa tus nombres y apellidos completos:", key="nombre_estudiante_input")
 
-with col_alumno:
-    nombre_estudiante = st.text_input("Ingresa tus nombres y apellidos completos:", key="nombre_estudiante_input")
+# MODIFICADO: Columnas paralelas para los selectores de Docente y Curso
+col_docente, col_curso = st.columns(2)
 
 with col_docente:
     docente_seleccionado = st.selectbox(
@@ -159,19 +159,25 @@ with col_docente:
         key="docente_seleccionado_input"
     )
 
+with col_curso:
+    curso_seleccionado = st.selectbox(
+        "Selecciona tu curso:",
+        ["curso uno", "curso dos", "curso tres"],
+        key="curso_seleccionado_input"
+    )
+
 st.warning(f"""
 🗣️ **Instrucciones de voz importantes:**
-1. 👤 **Identificación:** Asegúrate de escribir tu nombre completo arriba y elegir a tu docente.
+1. 👤 **Identificación:** Escribe tu nombre completo, selecciona tu docente y tu curso en las secciones de arriba.
 2. 🚀 **Inicio:** {datos_caso["instrucciones"]}
 3. 🎙️ **Simulación:** Graba tus respuestas interactivas de manera sucesiva.
-4. 🏁 **Finalización:** Cuando consideres que has cerrado la sesión o desees finalizar la prueba, menciona claramente la palabra **'TERMINAR'** o **'TERMINADO'** al final de tu último mensaje.
+4. 🏁 **Finalización:** Cuando consideres que has cerrado la sesión, menciona claramente la palabra **'TERMINAR'** o **'TERMINADO'** al final de tu último mensaje.
 """)
 
 # --- FASE 1: SIMULACIÓN POR VOZ ---
 if st.session_state.fase == "chat":
     st.markdown("### 🎙️ Graba tu mensaje aquí:")
     
-    # Bloqueo lógico del micrófono si el campo del nombre está vacío
     if not nombre_estudiante.strip():
         st.info("⚠️ Para activar el micrófono, primero debes escribir tu nombre en el cuadro de arriba.")
         audio_grabado = None
@@ -255,8 +261,8 @@ elif st.session_state.fase == "evaluacion":
     st.markdown("#### 🚀 Registro Centralizado:")
     
     with st.form(key="formulario_guardado"):
-        # MODIFICADO: Muestra visualmente qué alumno y qué docente se consolidarán
-        st.write(f"Presiona el botón de abajo para consolidar la participación de **{nombre_estudiante}** evaluado por **{docente_seleccionado}** en el registro central:")
+        # MODIFICADO: Texto de confirmación visual detallado
+        st.write(f"Presiona el botón de abajo para consolidar la participación de **{nombre_estudiante}** en el curso **{curso_seleccionado}** (Evaluado por: **{docente_seleccionado}**):")
         
         boton_guardar = st.form_submit_button("📊 Enviar conversación a Google Sheets central", use_container_width=True)
         
@@ -265,8 +271,8 @@ elif st.session_state.fase == "evaluacion":
                 url_hoja = "https://docs.google.com/spreadsheets/d/1wRZoKUEbvVfrETp7aUnjyzl9qNW99XhbGLGWocngJuQ/edit?usp=sharing"
                 conn = st.connection("gsheets", type=GSheetsConnection)
                 
-                # MODIFICADO: Ahora lee 7 columnas continuas [0, 1, 2, 3, 4, 5, 6] correspondientes de la A a la G
-                df_existente = conn.read(spreadsheet=url_hoja, usecols=[0, 1, 2, 3, 4, 5, 6], ttl=0)
+                # MODIFICADO: Ahora lee 8 columnas en total (del índice 0 al 7), cubriendo el rango de las columnas A a H
+                df_existente = conn.read(spreadsheet=url_hoja, usecols=[0, 1, 2, 3, 4, 5, 6, 7], ttl=0)
                 df_existente = df_existente.dropna(how="all")
                 
                 fecha_actual = datetime.now(ZoneInfo("America/Lima")).strftime("%Y-%m-%d %H:%M:%S")
@@ -281,11 +287,12 @@ elif st.session_state.fase == "evaluacion":
                     )
                     solo_porcentaje = proceso_nota.choices[0].message.content.strip()
                 
-                # MODIFICADO: Inserción estructurada mapeando la nueva columna "Docente"
+                # MODIFICADO: Mapeo de columnas con la nueva inyección del parámetro "Curso"
                 nueva_fila = pd.DataFrame([{
                     "Fecha": fecha_actual,
                     "Estudiante": nombre_estudiante if nombre_estudiante else "Anónimo",
-                    "Docente": docente_seleccionado,  # <-- NUEVA COLUMNA ASIGNADA
+                    "Docente": docente_seleccionado,
+                    "Curso": curso_seleccionado,  # <-- NUEVA COLUMNA ASIGNADA
                     "Caso_Evaluado": caso_seleccionado,
                     "Historial_Completo": st.session_state.conversacion_texto,
                     "Reporte_Evaluacion": st.session_state.reporte_final,
@@ -295,7 +302,7 @@ elif st.session_state.fase == "evaluacion":
                 df_actualizado = pd.concat([df_existente, nueva_fila], ignore_index=True)
                 conn.update(spreadsheet=url_hoja, data=df_actualizado)
                 
-                st.success(f"¡Logrado! Los resultados de {nombre_estudiante} se guardaron correctamente asignados a {docente_seleccionado} con una efectividad del {solo_porcentaje}.")
+                st.success(f"¡Logrado! Los resultados de {nombre_estudiante} se guardaron en la base central para el {curso_seleccionado} con una efectividad del {solo_porcentaje}.")
             
             except Exception as e:
                 st.error(f"Error al escribir en la nube: {e}")
