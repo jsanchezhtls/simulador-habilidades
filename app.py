@@ -48,7 +48,6 @@ CASOS = {
         "instrucciones": "Presiona el botón del micrófono y di claramente la palabra **'COMIENZA'** para activar el ejercicio e iniciar el diálogo con Camila.",
         "voice_config": "nova",
         "nombre_personaje": "Camila",
-        # NUEVO: Pautas y tips específicos para el Caso 1
         "definicion_concepto": "La **Empatía** es la capacidad de comprender y compartir los sentimientos y perspectivas de los demás, validando sus emociones sin juzgar ni saltar a conclusiones o soluciones apresuradas.",
         "pautas_tips": """
         * 👂 **Escucha Activa:** No interrumpas a Camila mientras se desahoga. Deja que exprese su frustración por completo.
@@ -67,7 +66,7 @@ DINÁMICA DE INICIO Y FIN:
 - Cuando el alumno mencione claramente la palabra "TERMINAR" o "TERMINADO", el ejercicio finalizará de inmediato.
 
 REGLAS DE EVALUACIÓN (CUANDO EL ALUMNO DIGA "TERMINAR" O "TERMINADO"):
-Saldrás por completo del personaje de Camila y te convertirás en un Director de Evaluación académica de Habilidades Blandas sumamente estricto, frío y objetivo. Tu labor es calificar el desempeño real del alumno, no su buena intención.
+Saldrás por completo del personaje de Camila y te financieramente en un Director de Evaluación académica de Habilidades Blandas sumamente estricto, frío y objetivo. Tu labor es calificar el desempeño real del alumno, no su buena intención.
 
 CRITERIO DE RECHAZO CRÍTICO (PUNTUACIÓN CERO):
 - Si el alumno NO interactúa con el personaje (por ejemplo, si la conversación solo contiene 'Comienza' y 'Terminado', mensajes vacíos, o se evade por completo el caso práctico sin dialogar sobre el problema), se considerará abandono total del ejercicio.
@@ -95,7 +94,6 @@ REPORTE A DEVOLVER:
         "instrucciones": "Presiona el botón del micrófono y di claramente la palabra **'COMIENZA'** para que Renato entre a la sala a reclamarte por el informe.",
         "voice_config": "onyx",
         "nombre_personaje": "Renato",
-        # NUEVO: Pautas y tips específicos para el Caso 2
         "definicion_concepto": "La **Resolución de Conflictos** implica gestionar desacuerdos o crisis interpersonales de manera constructiva, aplicando el autocontrol emocional para evitar que las agresiones escalen y buscando soluciones de mutuo beneficio.",
         "pautas_tips": """
         * 🧘‍♂️ **Autorregulación Emocional:** Aunque Renato llegue alzando la voz o atacándote, mantén un tono de voz calmado, pausado y profesional. No respondas con agresividad.
@@ -131,12 +129,15 @@ REPORTE A DEVOLVER:
 - **Aspectos Positivos:** (Breve)
 - **Aspectos de Mejora:** (Enumerar detalladamente fallas de asertividad o manejo de ira)
 - **Recomendaciones:** (Cómo debió manejar el conflicto de forma profesional)
-- **Porcentaje de Efectividad:** (Nota final justifying la regla matemática aplicada)"""
+- **Porcentaje de Efectividad:** (Nota final justificando la regla matemática aplicada)"""
     }
 }
 
 # --- 3. SELECCIÓN DE CASO DESDE LA BARRA LATERAL ---
 with st.sidebar:
+    # 🏛️ URL REAL DE TOULOUSE LAUTREC ASIGNADA CON UN ANCHO DISCRETO (130px)
+    st.image("https://www.toulouselautrec.edu.pe/sites/default/files/logo/logo-principal%402x.png", width=130)
+    
     st.header("🧠 Centro de Simulación")
     caso_seleccionado = st.selectbox(
         "Selecciona el caso a evaluar:",
@@ -161,7 +162,6 @@ st.markdown("---")
 st.subheader(datos_caso["titulo_interfaz"])
 st.info(datos_caso["contexto"])
 
-# NUEVO: Bloques colapsables con el marco teórico y los tips del concepto central
 with st.expander("📘 Marco Conceptual y Definición"):
     st.write(datos_caso["definicion_concepto"])
 
