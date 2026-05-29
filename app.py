@@ -48,6 +48,14 @@ CASOS = {
         "instrucciones": "Presiona el botón del micrófono y di claramente la palabra **'COMIENZA'** para activar el ejercicio e iniciar el diálogo con Camila.",
         "voice_config": "nova",
         "nombre_personaje": "Camila",
+        # NUEVO: Pautas y tips específicos para el Caso 1
+        "definicion_concepto": "La **Empatía** es la capacidad de comprender y compartir los sentimientos y perspectivas de los demás, validando sus emociones sin juzgar ni saltar a conclusiones o soluciones apresuradas.",
+        "pautas_tips": """
+        * 👂 **Escucha Activa:** No interrumpas a Camila mientras se desahoga. Deja que exprese su frustración por completo.
+        * ❤️ **Valida sus Emociones:** Usa frases que reconozcan su sentir antes de proponer algo (ej: *"Entiendo perfectamente que te sientas fastidiada, Camila, lamento que hayas pasado por eso"*).
+        * 🚫 **Evita la Indiferencia:** No minimices su problema diciendo cosas como *"no es para tanto"* o *"así son los trabajos en grupo"*.
+        * 🛠️ **Co-diseña una Solución:** En lugar de imponer qué hacer, pregúntale cómo se sentiría más cómoda participando en las siguientes reuniones.
+        """,
         "prompt_sistema": """Ponte en el rol de una persona de sexo mujer, llamada Camila, que es una estudiante universitaria triste y fastidiada pues sus compañeros de grupo están ignorando sus comentarios ya que consideran que "es muy lenta", "no entiende las explicaciones del profesor", "sus aportes son pobres". Estos comentarios son parcialmente ciertos pues Camila no ha participado mucho en el proyecto, realmente no comprende mucho del tema, pero ha dedicado esfuerzos reales para entenderlo. 
 
 Yo soy un integrante del equipo que tratará de empatizar contigo frente a esta situación, buscando comprensión del problema y de tus emociones. 
@@ -87,6 +95,14 @@ REPORTE A DEVOLVER:
         "instrucciones": "Presiona el botón del micrófono y di claramente la palabra **'COMIENZA'** para que Renato entre a la sala a reclamarte por el informe.",
         "voice_config": "onyx",
         "nombre_personaje": "Renato",
+        # NUEVO: Pautas y tips específicos para el Caso 2
+        "definicion_concepto": "La **Resolución de Conflictos** implica gestionar desacuerdos o crisis interpersonales de manera constructiva, aplicando el autocontrol emocional para evitar que las agresiones escalen y buscando soluciones de mutuo beneficio.",
+        "pautas_tips": """
+        * 🧘‍♂️ **Autorregulación Emocional:** Aunque Renato llegue alzando la voz o atacándote, mantén un tono de voz calmado, pausado y profesional. No respondas con agresividad.
+        * 🔍 **Aclara el Origen del Problema:** Investiga qué causó el malentendido antes de desmentirlo drásticamente. Puedes usar preguntas abiertas como: *"Renato, entiendo que estés molesto, cuéntame exactamente qué parte de las conclusiones viste cambiadas"*.
+        * 🤝 **Enfoque en Soluciones (Ganar-Ganar):** Busca una salida técnica o práctica inmediata (revisar el historial de versiones juntos, conversar con el líder del proyecto para corregirlo, etc.).
+        * ❌ **Evita la Defensiva:** Si te centras únicamente en decir *"yo no fui"* de manera cortante, Renato cerrará la comunicación y el conflicto escalará.
+        """,
         "prompt_sistema": """Ponte en el rol de un estudiante/trabajador llamado Renato. Estás muy molesto e indignado porque descubriste que cambiaron las conclusiones del informe final del equipo y crees firmemente que el usuario lo hizo a tus espaldas para sabotearte o hacerte quedar mal. Tu tono inicial es confrontativo, desconfiado y demandante.
 
 Yo soy tu compañero y trataré de calmar la situación usando resolución de conflictos.
@@ -101,7 +117,7 @@ REGLAS DE EVALUACIÓN (CUANDO EL ALUMNO DIGA "TERMINAR" O "TERMINADO"):
 Saldrás por completo del personaje de Renato y te convertirás en un Director de Evaluación académica de Habilidades Blandas sumamente estricto, frío y objetivo.
 
 CRITERIO DE RECHAZO CRÍTICO (PUNTUACIÓN CERO):
-- Si el alumno NO interactúa con el personaje (por ejemplo, si la conversación solo contiene 'Comienza' and 'Terminado', mensajes vacíos, o se evade por completo el caso práctico sin dialogar sobre el problema), se considerará abandono total del ejercicio.
+- Si el alumno NO interactúa con el personaje (por ejemplo, si la conversación solo contiene 'Comienza' y 'Terminado', mensajes vacíos, o se evade por completo el caso práctico sin dialogar sobre el problema), se considerará abandono total del ejercicio.
 - En este escenario, la nota final de 'Porcentaje de Efectividad:' DEBE ser obligatoriamente '0%'. Justifica en el reporte que no existió interacción válida para evaluar competencias.
 
 Evalúa la conversación bajo estos criterios explicitos:
@@ -115,7 +131,7 @@ REPORTE A DEVOLVER:
 - **Aspectos Positivos:** (Breve)
 - **Aspectos de Mejora:** (Enumerar detalladamente fallas de asertividad o manejo de ira)
 - **Recomendaciones:** (Cómo debió manejar el conflicto de forma profesional)
-- **Porcentaje de Efectividad:** (Nota final justificando la regla matemática aplicada)"""
+- **Porcentaje de Efectividad:** (Nota final justifying la regla matemática aplicada)"""
     }
 }
 
@@ -145,11 +161,17 @@ st.markdown("---")
 st.subheader(datos_caso["titulo_interfaz"])
 st.info(datos_caso["contexto"])
 
-# MODIFICADO: Bloque estructurado para Nombre del Alumno
+# NUEVO: Bloques colapsables con el marco teórico y los tips del concepto central
+with st.expander("📘 Marco Conceptual y Definición"):
+    st.write(datos_caso["definicion_concepto"])
+
+with st.expander("💡 Pautas y Tips clave para la Evaluación"):
+    st.markdown(datos_caso["pautas_tips"])
+
+# --- SECCIÓN: Datos de la Sesión ---
 st.markdown("#### 👤 Datos de la Sesión:")
 nombre_estudiante = st.text_input("Ingresa tus nombres y apellidos completos:", key="nombre_estudiante_input")
 
-# MODIFICADO: Columnas paralelas para los selectores de Docente y Curso
 col_docente, col_curso = st.columns(2)
 
 with col_docente:
@@ -261,7 +283,6 @@ elif st.session_state.fase == "evaluacion":
     st.markdown("#### 🚀 Registro Centralizado:")
     
     with st.form(key="formulario_guardado"):
-        # MODIFICADO: Texto de confirmación visual detallado
         st.write(f"Presiona el botón de abajo para consolidar la participación de **{nombre_estudiante}** en el curso **{curso_seleccionado}** (Evaluado por: **{docente_seleccionado}**):")
         
         boton_guardar = st.form_submit_button("📊 Enviar conversación a Google Sheets central", use_container_width=True)
@@ -271,7 +292,6 @@ elif st.session_state.fase == "evaluacion":
                 url_hoja = "https://docs.google.com/spreadsheets/d/1wRZoKUEbvVfrETp7aUnjyzl9qNW99XhbGLGWocngJuQ/edit?usp=sharing"
                 conn = st.connection("gsheets", type=GSheetsConnection)
                 
-                # MODIFICADO: Ahora lee 8 columnas en total (del índice 0 al 7), cubriendo el rango de las columnas A a H
                 df_existente = conn.read(spreadsheet=url_hoja, usecols=[0, 1, 2, 3, 4, 5, 6, 7], ttl=0)
                 df_existente = df_existente.dropna(how="all")
                 
@@ -287,12 +307,11 @@ elif st.session_state.fase == "evaluacion":
                     )
                     solo_porcentaje = proceso_nota.choices[0].message.content.strip()
                 
-                # MODIFICADO: Mapeo de columnas con la nueva inyección del parámetro "Curso"
                 nueva_fila = pd.DataFrame([{
                     "Fecha": fecha_actual,
                     "Estudiante": nombre_estudiante if nombre_estudiante else "Anónimo",
                     "Docente": docente_seleccionado,
-                    "Curso": curso_seleccionado,  # <-- NUEVA COLUMNA ASIGNADA
+                    "Curso": curso_seleccionado,
                     "Caso_Evaluado": caso_seleccionado,
                     "Historial_Completo": st.session_state.conversacion_texto,
                     "Reporte_Evaluacion": st.session_state.reporte_final,
