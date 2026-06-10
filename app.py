@@ -92,7 +92,7 @@ REPORTE A DEVOLVER (ESTRICTO):
         "contexto": """**Contexto del caso:** Renato es un compañero de trabajo/estudios con un carácter fuerte. Está sumamente alterado porque asegura que tú cambiaste las conclusiones del informe final sin avisarle, haciéndolo quedar mal frente al líder del proyecto. Él llega directamente a reclamarte con tono confrontativo.
 
 **Tu Objetivo:** Mantén la calma, practica la autorregulación emocional y usa la mediación asertiva. No te pongas a la defensiva; averigua qué pasó, aclara el malentendido sin escalar el conflicto y busca un acuerdo mutuo.""",
-        "instrucciones": "Presiona el botón del micrófono and di claramente la palabra **'COMIENZA'** para que Renato entre a la sala a reclamarte por el informe.",
+        "instrucciones": "Presiona el botón del micrófono y di claramente la palabra **'COMIENZA'** para que Renato entre a la sala a reclamarte por el informe.",
         "voice_config": "onyx",
         "nombre_personaje": "Renato",
         "definicion_concepto": "La **Resolución de Conflictos** implica gestionar desacuerdos o crisis interpersonales de manera constructiva, aplicando el autocontrol emocional para evitar que las agresiones escalen y buscando soluciones de mutuo beneficio.",
@@ -118,7 +118,7 @@ Saldrás por completo del personaje de Renato y te convertirás en un auditor ac
 PUNTUACIÓN BASE: Comienzas con 100%.
 
 APLICA ESTE CHECKLIST DE PENALIZACIONES DE FORMA IMPLACABLE:
-1. CRITERIO DE RECHAZO CRÍTICO: ¿El alumno NO interactuó con el personaje, evadió el caso, o la conversación solo contiene 'Comienza' and 'Terminado'? 
+1. CRITERIO DE RECHAZO CRÍTICO: ¿El alumno NO interactuó con el personaje, evadió el caso, o la conversación solo contiene 'Comienza' y 'Terminado'? 
    - SI -> La nota final es OBLIGATORIAMENTE 0%. Detén el análisis.
 2. ¿El alumno se puso a la defensiva de inmediato, atacó de vuelta, se centró solo en decir "yo no fui" o alzó el tono de voz escalando el conflicto? 
    - SI -> Resta 30% de forma matemática.
@@ -310,7 +310,7 @@ elif st.session_state.fase == "evaluacion":
                     proceso_nota = client.chat.completions.create(
                         model="gpt-4o-mini",
                         messages=[
-                            {"role": "system", "content": "Eres un asistente automatizado. Tu única tarea es leer el reporte de evaluación que te proporcionará el usuario y extraer el porcentaje de efectividad conseguido. Debes responder ÚNICAMENTE con el número seguido del símbolo '%' (por ejemplo: '85%' o '0%'). No incluyas texto adicional, ni saludos, ni explicaciones, ni puntos."},
+                            {"role": "system", "content": "Eres un asistente automatizado. Tu única tarea es leer el reporte de evaluación que te proporcionará el usuario y extraer exclusivamente el porcentaje numérico de efectividad final. Debes ignorar, omitir y eliminar por completo cualquier operación matemática o texto descriptivo que venga entre paréntesis (por ejemplo, si dice '45% (100% - 25% por soluciones...)', debes extraer solo '45%'). Tu respuesta final debe consistir ÚNICAMENTE en el número seguido del símbolo '%' (por ejemplo: '45%' o '0%'). No incluyas texto adicional, ni explicaciones, ni paréntesis, ni puntos."},
                             {"role": "user", "content": st.session_state.reporte_final}
                         ]
                     )
