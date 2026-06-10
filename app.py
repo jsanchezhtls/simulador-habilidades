@@ -42,9 +42,7 @@ st.markdown("""
 CASOS = {
     "Caso 1: Camila (Empatía en Equipos)": {
         "titulo_interfaz": "Caso de Estudio: Empatía y Gestión de Equipos",
-        "contexto": """**Contexto del caso:** Te encuentras en una reunión con tu compañera de grupo, Camila. Ella se encuentra visiblemente triste y fastidiada porque siente que el resto del equipo ignora sus comentarios, catalogándola de "lenta" y diciendo que sus aportes son "pobres". Es verdad que ella no ha participado mucho y le cuesta el tema, pero genuinamente se está esforzando por entenderlo.
-
-**Tu Objetivo:** Conversa con ella. Utiliza tu capacidad de escucha activa y asertividad para comprender la raíz del problema, validar sus emociones y demostrar una respuesta verdaderamente empática ante su frustración.""",
+        "contexto": """**Contexto del caso:** Te encuentras en una reunión con tu compañera de grupo, Camila. Ella se encuentra visiblemente triste y fastidiada porque siente que el resto del equipo ignora sus comentarios, catalogándola de "lenta" y diciendo que sus aportes son "pobres". Es verdad que ella no ha participado mucho y le cuesta el tema, pero genuinamente se está esforzando por entenderlo.""",
         "instrucciones": "Presiona el botón del micrófono y di claramente la palabra **'COMIENZA'** para activar el ejercicio e iniciar el diálogo con Camila.",
         "voice_config": "nova",
         "nombre_personaje": "Camila",
@@ -84,14 +82,12 @@ REPORTE A DEVOLVER (ESTRICTO):
 - **Aspectos Positivos:** (Sé extremadamente breve, máximo 2 líneas)
 - **Aspectos de Mejora:** (Detalla con citas textuales de la conversación cada uno de los puntos del checklist donde el alumno falló)
 - **Recomendaciones:** (Cómo debió haber respondido para no cometer esos errores)
-- **Porcentaje de Efectividad:** [Muestra aquí la resta matemática exacta resultante del checklist. Si el desempeño fue deficiente o mediocre, calcula la reducción real sin piedad]"""
+- **Porcentaje de Efectividad:** [Muestra ÚNICAMENTE el número final seguido del símbolo '%' sin desgloses matemáticos, sin operaciones, sin explicaciones adicionales y sin ningún texto entre paréntesis. Ejemplo correcto: 45%]"""
     },
     
     "Caso 2: Renato (Resolución de Conflictos)": {
         "titulo_interfaz": "Caso de Estudio: Mediación y Gestión de Conflictos",
-        "contexto": """**Contexto del caso:** Renato es un compañero de trabajo/estudios con un carácter fuerte. Está sumamente alterado porque asegura que tú cambiaste las conclusiones del informe final sin avisarle, haciéndolo quedar mal frente al líder del proyecto. Él llega directamente a reclamarte con tono confrontativo.
-
-**Tu Objetivo:** Mantén la calma, practica la autorregulación emocional y usa la mediación asertiva. No te pongas a la defensiva; averigua qué pasó, aclara el malentendido sin escalar el conflicto y busca un acuerdo mutuo.""",
+        "contexto": """**Contexto del caso:** Renato es un compañero de trabajo/estudios con un carácter fuerte. Está sumamente alterado porque asegura que tú cambiaste las conclusiones del informe final sin avisarle, haciéndolo quedar mal frente al líder del proyecto. Él llega directamente a reclamarte con tono confrontativo.""",
         "instrucciones": "Presiona el botón del micrófono y di claramente la palabra **'COMIENZA'** para que Renato entre a la sala a reclamarte por el informe.",
         "voice_config": "onyx",
         "nombre_personaje": "Renato",
@@ -131,13 +127,12 @@ REPORTE A DEVOLVER (ESTRICTO):
 - **Aspectos Positivos:** (Sé extremadamente breve, máximo 2 líneas)
 - **Aspectos de Mejora:** (Detalla con citas textuales de la conversación cada uno de los puntos del checklist donde el alumno falló)
 - **Recomendaciones:** (Cómo debió manejar el conflicto de forma profesional)
-- **Porcentaje de Efectividad:** [Muestra aquí la resta matemática exacta resultante del checklist. Si el desempeño fue deficiente o mediocre, calcula la reducción real sin piedad]"""
+- **Porcentaje de Efectividad:** [Muestra ÚNICAMENTE el número final seguido del símbolo '%' sin desgloses matemáticos, sin operaciones, sin explicaciones adicionales y sin ningún texto entre paréntesis. Ejemplo correcto: 45%]"""
     }
 }
 
 # --- 3. SELECCIÓN DE CASO DESDE LA BARRA LATERAL ---
 with st.sidebar:
-    # 🏛️ ALINEACIÓN AL MARGEN DERECHO UTILIZANDO HTML INYECTADO
     st.markdown(
         """
         <div style="display: flex; justify-content: flex-end; margin-bottom: 0px; width: 100%;">
@@ -310,7 +305,7 @@ elif st.session_state.fase == "evaluacion":
                     proceso_nota = client.chat.completions.create(
                         model="gpt-4o-mini",
                         messages=[
-                            {"role": "system", "content": "Eres un asistente automatizado. Tu única tarea es leer el reporte de evaluación que te proporcionará el usuario y extraer exclusivamente el porcentaje numérico de efectividad final. Debes ignorar, omitir y eliminar por completo cualquier operación matemática o texto descriptivo que venga entre paréntesis (por ejemplo, si dice '45% (100% - 25% por soluciones...)', debes extraer solo '45%'). Tu respuesta final debe consistir ÚNICAMENTE en el número seguido del símbolo '%' (por ejemplo: '45%' o '0%'). No incluyas texto adicional, ni explicaciones, ni paréntesis, ni puntos."},
+                            {"role": "system", "content": "Eres un asistente automatizado. Tu única tarea es leer el reporte de evaluación que te proporcionará el usuario y extraer exclusivamente el porcentaje numérico de efectividad final. Debes ignorar, omitir y eliminar por completo cualquier operación matemática o texto descriptivo que venga entre paréntesis (por ejemplo, si dice '45% (100% - 25% por soluciones...)', debes extraer solo '45%'). Tu respuesta final debe consistir ÚNICAMENTE en el número seguido del símbolo '%' (por ejemplo: '45%' o '0%'). No incliquas texto adicional, ni explicaciones, ni paréntesis, ni puntos."},
                             {"role": "user", "content": st.session_state.reporte_final}
                         ]
                     )
