@@ -30,7 +30,6 @@ CASOS = {
     "Caso 1: Camila (Empatía en Equipos)": {
         "titulo_interfaz": "Caso de Estudio: Empatía y Gestión de Equipos",
         "contexto": """**Contexto del caso:** Te encuentras en una reunión con tu compañera de grupo, Camila. Ella se encuentra visiblemente triste y fastidiada porque siente que el resto del equipo ignora sus comentarios, catalogándola de "lenta" y diciendo que sus aportes son "pobres". Es verdad que ella no ha participado mucho y le cuesta el tema, pero genuinamente se está esforzando por entenderlo.""",
-        "instrucciones": "Presiona el botón del micrófono y di claramente la palabra **'COMIENZA'** para activar el ejercicio e iniciar el diálogo con Camila.",
         "voice_config": "nova",
         "nombre_personaje": "Camila",
         "definicion_concepto": "La **Empatía** es la capacidad de comprender y compartir los sentimientos y perspectivas de los demás, validando sus emociones sin juzgar ni saltar a conclusiones o soluciones apresuradas.",
@@ -47,8 +46,7 @@ Yo soy un integrante del equipo que tratará de empatizar contigo.
 DINÁMICA DE DIÁLOGO:
 - Iniciarás el diálogo molesta, con un tono que refleje esa tristeza y fastidio acumulados.
 - Trata que mis respuestas no te sean tan convincentes en primera instancia. Si me confundo o soy insensible, me lo harás saber de forma sarcástica.
-- BAJO NINGUNA CIRCUNSTANCIA UTILICES PROFANIDADES O PALABRAS SOECES.
-- Cuando el alumno mencione claramente la palabra "TERMINAR" o "TERMINADO", el ejercicio finalizará de inmediato.""",
+- BAJO NINGUNA CIRCUNSTANCIA UTILICES PROFANIDADES O PALABRAS SOECES.""",
         
         "prompt_evaluacion": """Te vas a convertir en un auditor académico robótico, implacable, frío y sin emociones. Tu única función es auditar los errores del alumno basándote en el historial de la conversación. No justifiques sus buenas intenciones.
 
@@ -69,7 +67,6 @@ REPORTE A DEVOLVER (ESTRICTO):
     "Caso 2: Renato (Resolución de Conflictos)": {
         "titulo_interfaz": "Caso de Estudio: Mediación y Gestión de Conflictos",
         "contexto": """**Contexto del caso:** Renato es un compañero de trabajo/estudios con un carácter fuerte. Está sumamente alterado porque asegura que tú cambiaste las conclusiones del informe final sin avisarle, haciéndolo quedar mal frente al líder del proyecto. Él llega directamente a reclamarte con tono confrontativo.""",
-        "instrucciones": "Presiona el botón del micrófono y di claramente la palabra **'COMIENZA'** para que Renato entre a la sala a reclamarte por el informe.",
         "voice_config": "onyx",
         "nombre_personaje": "Renato",
         "definicion_concepto": "La **Resolución de Conflictos** implica gestionar desacuerdos o crisis interpersonales de manera constructiva, aplicando el autocontrol emocional para evitar que las agresiones escalen.",
@@ -85,8 +82,7 @@ Yo soy tu compañero y trataré de calmar la situación usando resolución de co
 DINÁMICA DE DIÁLOGO:
 - Iniciarás reclamando fuertemente por los cambios del informe.
 - Si el alumno se pone a la defensiva, te interrumpe o te alza la voz, te molestarás más. Si usa comunicación asertiva, irás bajando la guardia poco a poco.
-- BAJO NINGUNA CIRCUNSTANCIA UTILICES PROFANIDADES O PALABRAS SOECES.
-- Cuando el alumno mencione claramente la palabra "TERMINAR" o "TERMINADO", el ejercicio finalizará de inmediato.""",
+- BAJO NINGUNA CIRCUNSTANCIA UTILICES PROFANIDADES O PALABRAS SOECES.""",
         
         "prompt_evaluacion": """Te vas a convertir en un auditor académico robótico, implacable, frío y sin emociones. Tu única función es auditar los errores del alumno basándote en el historial de la conversación. No justifiques sus buenas intenciones.
 
@@ -115,12 +111,14 @@ with st.sidebar:
 
 datos_caso = CASOS[caso_seleccionado]
 
+# --- CONTROL DE ESTADO INTERNO ---
 if "caso_actual" not in st.session_state or st.session_state.caso_actual != caso_seleccionado:
     st.session_state.caso_actual = caso_seleccionado
     st.session_state.historial = [{"role": "system", "content": datos_caso["prompt_sistema"]}]
     st.session_state.fase = "chat"
     st.session_state.conversacion_texto = ""
     st.session_state.reporte_final = ""
+    st.session_state.simulacion_activa = False
 
 # --- 4. INTERFAZ VISUAL ---
 st.title("🎙️ Simulador de Habilidades Blandas")
@@ -137,73 +135,85 @@ col_docente, col_curso = st.columns(2)
 with col_docente: docente_seleccionado = st.selectbox("Selecciona tu docente:", ["profesor uno", "profesor dos", "profesor tres"], key="docente_seleccionado_input")
 with col_curso: curso_seleccionado = st.selectbox("Selecciona tu curso:", ["curso uno", "curso dos", "curso tres"], key="curso_seleccionado_input")
 
-st.warning(f"🗣️ **Instrucciones de voz:**\n1. Escribe tu nombre completo.\n2.🚀 **Inicio:** {datos_caso['instrucciones']}\n3.🎙️ **Simulación:** Graba tus respuestas de manera sucesiva.\n4.🏁 **Finalización:** Di claramente **'TERMINAR'** o **'TERMINADO'** al final de tu último mensaje.")
+st.warning(f"🗣️ **Instrucciones del simulador:**\n1. Registra tus datos completos en la sección superior.\n2. 🚀 Presiona el botón **'Iniciar Simulación'** para que el personaje empiece a hablar.\n3. 🎙️ Responde usando el micrófono de forma sucesiva.\n4. 🏁 Cuando desees terminar la sesión, presiona el botón **'Finalizar y Evaluar'**.")
 
 # --- FASE 1: SIMULACIÓN POR VOZ ---
 if st.session_state.fase == "chat":
-    st.markdown("### 🎙️ Graba tu mensaje aquí:")
-    if not nombre_estudiante.strip():
-        st.info("⚠️ Para activar el micrófono, primero debes escribir tu nombre en el cuadro de arriba.")
-        audio_grabado = None
-    else:
-        audio_grabado = mic_recorder(start_prompt="🔴 Presiona para Hablar", stop_prompt="⏹️ Detener Grabación", key=f"grabador_{caso_seleccionado}", format="wav")
     
-    if audio_grabado:
-        estado = st.empty()
-        try:
-            with estado.container():
-                st.write("⚡ *Procesando audio de entrada...*")
-                with open("alumno_audio.wav", "wb") as f: f.write(audio_grabado["bytes"])
-                with open("alumno_audio.wav", "rb") as audio_file:
-                    transcripcion = client.audio.transcriptions.create(model="whisper-1", file=audio_file)
-            
-            texto_alumno = transcripcion.text
-            st.session_state.conversacion_texto += f"Tú: {texto_alumno}\n\n"
-            st.session_state.historial.append({"role": "user", "content": texto_alumno})
-            
-            texto_limpio = texto_alumno.upper().replace(".", "").replace(",", "").strip()
-            
-            if "TERMINAR" in texto_limpio or "TERMINADO" in texto_limpio:
-                with st.spinner(f"{datos_caso['nombre_personaje']} está procesando el reporte de evaluación final..."):
-                    
-                    # --- VALIDACIÓN DE INTERACCIÓN REAL POR CODIGO (PYTHON) ---
-                    # Contamos cuántas intervenciones reales del usuario hay (ignorando el prompt del sistema)
-                    intervenciones_usuario = [m for m in st.session_state.historial if m["role"] == "user"]
-                    palabras_totales = " ".join([m["content"] for m in intervenciones_usuario]).upper()
-                    
-                    # Limpiamos palabras clave de control para ver si dijo algo más
-                    for cmd in ["COMIENZA", "TERMINAR", "TERMINADO", "INICIAR"]:
-                        palabras_totales = palabras_totales.replace(cmd, "")
-                    
-                    # Si no hay texto de diálogo real tras remover los comandos de control
-                    if len(palabras_totales.strip()) < 5:
-                        st.session_state.reporte_final = """- **Aspectos Positivos:** Ninguno. No existió interacción real con el personaje.
+    # --- BOTONES DE CONTROL DE FLUJO SUPERIORES ---
+    col_btn1, col_btn2 = st.columns(2)
+    
+    with col_btn1:
+        if st.button("🚀 Iniciar Simulación", use_container_width=True, disabled=st.session_state.simulacion_activa or not nombre_estudiante.strip()):
+            st.session_state.simulacion_activa = True
+            with st.spinner(f"Iniciando caso con {datos_caso['nombre_personaje']}..."):
+                # Disparamos artificialmente el inicio de la conversación simulando la instrucción
+                st.session_state.historial.append({"role": "user", "content": "COMIENZA EL EJERCICIO"})
+                if len(st.session_state.historial) == 3:
+                    st.session_state.historial.insert(1, {"role": "system", "content": f"Nota de contexto: El usuario con el que hablas es un alumno llamado {nombre_estudiante}."})
+                
+                response = client.chat.completions.create(model="gpt-4o-mini", messages=st.session_state.historial)
+                respuesta_personaje = response.choices[0].message.content
+                st.session_state.historial.append({"role": "assistant", "content": respuesta_personaje})
+                st.session_state.conversacion_texto += f"{datos_caso['nombre_personaje']}: {respuesta_personaje}\n\n"
+                
+                audio_response = client.audio.speech.create(
+                    model="tts-1", voice=datos_caso["voice_config"], input=respuesta_personaje, response_format="aac", speed=1.12
+                )
+                audio_response.write_to_file("simulador_voz.aac")
+                st.session_state.reproducir_inicial = True
+            st.rerun()
+
+    with col_btn2:
+        if st.button("🏁 Finalizar y Evaluar", use_container_width=True, disabled=not st.session_state.simulacion_activa):
+            with st.spinner("Procesando reporte de evaluación final..."):
+                # Filtramos para verificar interacciones del usuario excluyendo el disparo inicial automático
+                intervenciones_usuario = [m for m in st.session_state.historial if m["role"] == "user" and m["content"] != "COMIENZA EL EJERCICIO"]
+                palabras_totales = " ".join([m["content"] for m in intervenciones_usuario])
+                
+                if len(palabras_totales.strip()) < 5:
+                    st.session_state.reporte_final = """- **Aspectos Positivos:** Ninguno. No existió interacción real con el personaje.
 - **Aspectos de Mejora:** Abandono o evasión del ejercicio práctico.
 - **Recomendaciones:** Debió entablar un diálogo activo con el personaje para poner a prueba sus habilidades antes de finalizar la sesión.
 - **Porcentaje de Efectividad:** 0%"""
-                    else:
-                        # Si sí hay diálogo estructurado, la IA evalúa sin sesgarse con el bloqueo crítico
-                        mensajes_evaluacion = [
-                            {"role": "system", "content": datos_caso["prompt_evaluacion"]},
-                            {"role": "user", "content": f"Aquí está el historial completo de la simulación para que lo evalúes:\n\n{st.session_state.conversacion_texto}"}
-                        ]
-                        response_eval = client.chat.completions.create(
-                            model="gpt-4o-mini",
-                            messages=mensajes_evaluacion
-                        )
-                        st.session_state.reporte_final = response_eval.choices[0].message.content
-                    
-                    st.session_state.fase = "evaluacion"
-                st.rerun()
-            
-            else:
+                else:
+                    mensajes_evaluacion = [
+                        {"role": "system", "content": datos_caso["prompt_evaluacion"]},
+                        {"role": "user", "content": f"Aquí está el historial completo de la simulación para que lo evalúes:\n\n{st.session_state.conversacion_texto}"}
+                    ]
+                    response_eval = client.chat.completions.create(model="gpt-4o-mini", messages=mensajes_evaluacion)
+                    st.session_state.reporte_final = response_eval.choices[0].message.content
+                
+                st.session_state.fase = "evaluacion"
+            st.rerun()
+
+    st.markdown("---")
+
+    # --- REPRODUCCIÓN AUTOMÁTICA DEL SALUDO INICIAL DEL PERSONAJE ---
+    if getattr(st.session_state, 'reproducir_inicial', False):
+        st.markdown(f"### 🗣️ {datos_caso['nombre_personaje']} dice:")
+        st.audio("simulador_voz.aac", format="audio/aac", autoplay=True)
+        st.session_state.reproducir_inicial = False
+
+    # --- CONTROL DINÁMICO DEL MICRÓFONO EN PANTALLA ---
+    if st.session_state.simulacion_activa:
+        st.markdown("### 🎙️ Graba tu respuesta aquí:")
+        audio_grabado = mic_recorder(start_prompt="🔴 Presiona para Hablar", stop_prompt="⏹️ Detener Grabación", key=f"grabador_{caso_seleccionado}", format="wav")
+        
+        if audio_grabado:
+            estado = st.empty()
+            try:
+                with estado.container():
+                    st.write("⚡ *Procesando audio...*")
+                    with open("alumno_audio.wav", "wb") as f: f.write(audio_grabado["bytes"])
+                    with open("alumno_audio.wav", "rb") as audio_file:
+                        transcripcion = client.audio.transcriptions.create(model="whisper-1", file=audio_file)
+                
+                texto_alumno = transcripcion.text
+                st.session_state.conversacion_texto += f"Tú: {texto_alumno}\n\n"
+                st.session_state.historial.append({"role": "user", "content": texto_alumno})
+                
                 with st.spinner(f"{datos_caso['nombre_personaje']} está pensando..."):
-                    if len(st.session_state.historial) == 2:
-                        st.session_state.historial.insert(1, {
-                            "role": "system", 
-                            "content": f"Nota de contexto: El usuario con el que hablas es un alumno llamado {nombre_estudiante}."
-                        })
-                        
                     response = client.chat.completions.create(model="gpt-4o-mini", messages=st.session_state.historial)
                     respuesta_personaje = response.choices[0].message.content
                     st.session_state.historial.append({"role": "assistant", "content": respuesta_personaje})
@@ -217,9 +227,13 @@ if st.session_state.fase == "chat":
                 estado.empty()
                 st.markdown(f"### 🗣️ {datos_caso['nombre_personaje']} dice:")
                 st.audio("simulador_voz.aac", format="audio/aac", autoplay=True)
-
-        except Exception as e:
-            st.error(f"Hubo un problema con la API: {e}")
+            except Exception as e:
+                st.error(f"Hubo un problema con la API: {e}")
+    else:
+        if nombre_estudiante.strip():
+            st.info("💡 Todo listo. Presiona el botón '🚀 Iniciar Simulación' arriba para comenzar el ejercicio.")
+        else:
+            st.info("⚠️ Ingresa tu nombre en el cuadro superior para desbloquear los controles de la simulación.")
 
 # --- FASE 2: MOSTRAR EVALUACIÓN FIJA EN FORMULARIO ---
 elif st.session_state.fase == "evaluacion":
@@ -269,6 +283,7 @@ elif st.session_state.fase == "evaluacion":
         st.session_state.fase = "chat"
         st.session_state.conversacion_texto = ""
         st.session_state.reporte_final = ""
+        st.session_state.simulacion_activa = False
         st.rerun()
 
 # --- HISTORIAL VISUAL DE LA CONVERSACIÓN ---
