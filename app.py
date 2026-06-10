@@ -66,18 +66,17 @@ DINÁMICA DE INICIO Y FIN:
 - Cuando el alumno mencione claramente la palabra "TERMINAR" o "TERMINADO", el ejercicio finalizará de inmediato.
 
 REGLAS DE EVALUACIÓN (CUANDO EL ALUMNO DIGA "TERMINAR" O "TERMINADO"):
-Saldrás por completo del personaje de Camila y te financieramente en un Director de Evaluación académica de Habilidades Blandas sumamente estricto, frío y objetivo. Tu labor es calificar el desempeño real del alumno, no su buena intención.
+Saldrás por completo del personaje de Camila y te convertirás en un Director de Evaluación académica de Habilidades Blandas sumamente estricto, frío y objetivo. Tu labor es calificar el desempeño real del alumno, no su buena intención.
 
-CRITERIO DE RECHAZO CRÍTICO (PUNTUACIÓN CERO):
+CRITERIO DE RECHAZO CRÍTICO (PUNTUACIÓN CERO INMUTABLE):
 - Si el alumno NO interactúa con el personaje (por ejemplo, si la conversación solo contiene 'Comienza' y 'Terminado', mensajes vacíos, o se evade por completo el caso práctico sin dialogar sobre el problema), se considerará abandono total del ejercicio.
-- En este escenario, la nota final de 'Porcentaje de Efectividad:' DEBE ser obligatoriamente '0%'. Justifica en el reporte que no existió interacción válida para evaluar competencias.
+- EN ESTE ESCENARIO, LA NOTA FINAL DE 'Porcentaje de Efectividad:' DEBE SER OBLIGATORIAMENTE '0%'. Justifica en el reporte que no existió interacción válida para evaluar competencias.
 
-Evalúa la conversación bajo estos criterios explicitos:
-1) ASPECTOS DE MEJORA CRÍTICOS: Considera error si el alumno minimiza tu problema, da soluciones apresuradas sin escuchar, es indiferente o justifica el aislamiento de tus compañeros.
-2) PENALIZACIONES MATEMÁTICAS INMUTABLES:
-   - Si detectas 1 solo aspecto de mejora: La nota MÁXIMA admitida es 75%.
-   - Si detectas 2 o 3 aspectos de mejora: La nota MÁXIMA admitida es 50%.
-   - Si detectas respuestas sumamente inadecuadas, frías o de nula empatía: La nota MÁXIMA admitida es 20%.
+ESCALA DE CALIFICACIÓN DINÁMICA Y EXIGENTE (SÓLO SI HUBO INTERACCIÓN REAL):
+- Eres un evaluador académico frío, severo y sumamente estricto. Tu punto de partida para una conversación perfecta (sin un solo error) es 100%. No regales puntos por "buena intención" o simple cortesía.
+- Cada "Aspecto de Mejora" menor o falla leve de escucha activa/asertividad DEBE penalizarse restando entre 12% y 15% de la nota final.
+- Si el alumno comete un error crítico (minimizar el problema, dar soluciones apresuradas, ponerse a la defensiva o invalidar emociones), penaliza restando entre 25% y 30% por cada uno.
+- Calcula la nota final restando estas penalizaciones de forma matemática exacta. Esto generará puntuaciones muy variadas y realistas (como 43%, 58%, 71%, etc.), pero mantendrá la barra de exigencia muy alta para evitar la sobrecalificación.
 
 REPORTE A DEVOLVER:
 - **Aspectos Positivos:** (Breve)
@@ -97,7 +96,7 @@ REPORTE A DEVOLVER:
         "definicion_concepto": "La **Resolución de Conflictos** implica gestionar desacuerdos o crisis interpersonales de manera constructiva, aplicando el autocontrol emocional para evitar que las agresiones escalen y buscando soluciones de mutuo beneficio.",
         "pautas_tips": """
         * 🧘‍♂️ **Autorregulación Emocional:** Aunque Renato llegue alzando la voz o atacándote, mantén un tono de voz calmado, pausado y profesional. No respondas con agresividad.
-        * 🔍 **Aclara el Origen del Problema:** Investiga qué causó el malentendido antes de desmentirlo drásticamente. Puedes usar preguntas abiertas como: *"Renato, entiendo que estés molesto, cuéntame exactamente qué parte de las conclusiones viste cambiadas"*.
+        * 🔍 **Aclara el Origen del Problema:** Investiga qué causó el malentendido antes de desmentirlo drácticamente. Puedes usar preguntas abiertas como: *"Renato, entiendo que estés molesto, cuéntame exactamente qué parte de las conclusiones viste cambiadas"*.
         * 🤝 **Enfoque en Soluciones (Ganar-Ganar):** Busca una salida técnica o práctica inmediata (revisar el historial de versiones juntos, conversar con el líder del proyecto para corregirlo, etc.).
         * ❌ **Evita la Defensiva:** Si te centras únicamente en decir *"yo no fui"* de manera cortante, Renato cerrará la comunicación y el conflicto escalará.
         """,
@@ -114,21 +113,20 @@ DINÁMICA DE INICIO Y FIN:
 REGLAS DE EVALUACIÓN (CUANDO EL ALUMNO DIGA "TERMINAR" O "TERMINADO"):
 Saldrás por completo del personaje de Renato y te convertirás en un Director de Evaluación académica de Habilidades Blandas sumamente estricto, frío y objetivo.
 
-CRITERIO DE RECHAZO CRÍTICO (PUNTUACIÓN CERO):
+CRITERIO DE RECHAZO CRÍTICO (PUNTUACIÓN CERO INMUTABLE):
 - Si el alumno NO interactúa con el personaje (por ejemplo, si la conversación solo contiene 'Comienza' y 'Terminado', mensajes vacíos, o se evade por completo el caso práctico sin dialogar sobre el problema), se considerará abandono total del ejercicio.
-- En este escenario, la nota final de 'Porcentaje de Efectividad:' DEBE ser obligatoriamente '0%'. Justifica en el reporte que no existió interacción válida para evaluar competencias.
+- EN ESTE ESCENARIO, LA NOTA FINAL DE 'Porcentaje de Efectividad:' DEBE SER OBLIGATORIAMENTE '0%'. Justifica en el reporte que no existió interacción válida para evaluar competencias.
 
-Evalúa la conversación bajo estos criterios explicitos:
-1) ASPECTOS DE MEJORA CRÍTICOS: Considera error si el alumno se puso a la defensiva, te atacó de vuelta, se mostró indiferente, no aclaró el origen del malentendido o no propuso una solución o disculpa asertiva.
-2) PENALIZACIONES MATEMÁTICAS INMUTABLES:
-   - Si detectas 1 solo aspecto de mejora: La nota MÁXIMA admitida es 75%.
-   - Si detectas 2 o 3 aspectos de mejora: La nota MÁXIMA admitida es 50%.
-   - Si detectas respuestas que escalaron el conflicto o nulo autocontrol: La nota MÁXIMA admitida es 20%.
+ESCALA DE CALIFICACIÓN DINÁMICA Y EXIGENTE (SÓLO SI HUBO INTERACCIÓN REAL):
+- Eres un evaluador académico frío, severo y sumamente estricto. Tu punto de partida para una conversación perfecta (sin un solo error) es 100%. No regales puntos por "buena intención" o simple cortesía.
+- Cada "Aspecto de Mejora" menor o falla leve de escucha activa/asertividad DEBE penalizarse restando entre 12% y 15% de la nota final.
+- Si el alumno comete un error crítico (minimizar el problema, dar soluciones apresuradas, ponerse a la defensiva o invalidar emociones), penaliza restando entre 25% y 30% por cada uno.
+- Calcula la nota final restando estas penalizaciones de forma matemática exacta. Esto generará puntuaciones muy variadas y realistas (como 43%, 58%, 71%, etc.), pero mantendrá la barra de exigencia muy alta para evitar la sobrecalificación.
 
 REPORTE A DEVOLVER:
 - **Aspectos Positivos:** (Breve)
 - **Aspectos de Mejora:** (Enumerar detalladamente fallas de asertividad o manejo de ira)
-- **Recomendaciones:** (Cómo debió manejar el conflicto de forma profesional)
+- **Recommendations:** (Cómo debió manejar el conflicto de forma profesional)
 - **Porcentaje de Efectividad:** (Nota final justificando la regla matemática aplicada)"""
     }
 }
@@ -161,6 +159,7 @@ if "caso_actual" not in st.session_state or st.session_state.caso_actual != caso
     st.session_state.fase = "chat"
     st.session_state.conversacion_texto = ""
     st.session_state.reporte_final = ""
+    st.session_state.guardado_exitoso = False  # Control inicial de guardado para reseteos
 
 # --- 4. INTERFAZ VISUAL DINÁMICA ---
 st.title("🎙️ Simulador de Habilidades Blandas")
@@ -289,55 +288,62 @@ elif st.session_state.fase == "evaluacion":
     st.markdown("---")
     st.markdown("#### 🚀 Registro Centralizado:")
     
-    with st.form(key="formulario_guardado"):
-        st.write(f"Presiona el botón de abajo para consolidar la participación de **{nombre_estudiante}** en el curso **{curso_seleccionado}** (Evaluado por: **{docente_seleccionado}**):")
-        
-        boton_guardar = st.form_submit_button("📊 Enviar conversación a Google Sheets central", use_container_width=True)
-        
-        if boton_guardar:
-            try:
-                url_hoja = "https://docs.google.com/spreadsheets/d/1wRZoKUEbvVfrETp7aUnjyzl9qNW99XhbGLGWocngJuQ/edit?usp=sharing"
-                conn = st.connection("gsheets", type=GSheetsConnection)
-                
-                df_existente = conn.read(spreadsheet=url_hoja, usecols=[0, 1, 2, 3, 4, 5, 6, 7], ttl=0)
-                df_existente = df_existente.dropna(how="all")
-                
-                fecha_actual = datetime.now(ZoneInfo("America/Lima")).strftime("%Y-%m-%d %H:%M:%S")
-                
-                with st.spinner("Extrayendo porcentaje de efectividad para el registro central..."):
-                    proceso_nota = client.chat.completions.create(
-                        model="gpt-4o-mini",
-                        messages=[
-                            {"role": "system", "content": "Eres un asistente automatizado. Tu única tarea es leer el reporte de evaluación que te proporcionará el usuario y extraer el porcentaje de efectividad conseguido. Debes responder ÚNICAMENTE con el número seguido del símbolo '%' (por ejemplo: '85%' o '0%'). No incluyas texto adicional, ni saludos, ni explicaciones, ni puntos."},
-                            {"role": "user", "content": st.session_state.reporte_final}
-                        ]
-                    )
-                    solo_porcentaje = proceso_nota.choices[0].message.content.strip()
-                
-                nueva_fila = pd.DataFrame([{
-                    "Fecha": fecha_actual,
-                    "Estudiante": nombre_estudiante if nombre_estudiante else "Anónimo",
-                    "Docente": docente_seleccionado,
-                    "Curso": curso_seleccionado,
-                    "Caso_Evaluado": caso_seleccionado,
-                    "Historial_Completo": st.session_state.conversacion_texto,
-                    "Reporte_Evaluacion": st.session_state.reporte_final,
-                    "Porcentaje_Efectividad": solo_porcentaje
-                }])
-                
-                df_actualizado = pd.concat([df_existente, nueva_fila], ignore_index=True)
-                conn.update(spreadsheet=url_hoja, data=df_actualizado)
-                
-                st.success(f"¡Logrado! Los resultados de {nombre_estudiante} se guardaron en la base central para el {curso_seleccionado} con una efectividad del {solo_porcentaje}.")
+    # 🔒 SISTEMA DE CONTROL DE FLUJO PARA EL PILOTO (ANTI-DUPLICADOS)
+    if not st.session_state.guardado_exitoso:
+        with st.form(key="formulario_guardado"):
+            st.write(f"Presiona el botón de abajo para consolidar la participación de **{nombre_estudiante}** en el curso **{curso_seleccionado}** (Evaluado por: **{docente_seleccionado}**):")
             
-            except Exception as e:
-                st.error(f"Error al escribir en la nube: {e}")
+            boton_guardar = st.form_submit_button("📊 Enviar conversación a Google Sheets central", use_container_width=True)
+            
+            if boton_guardar:
+                try:
+                    url_hoja = "https://docs.google.com/spreadsheets/d/1wRZoKUEbvVfrETp7aUnjyzl9qNW99XhbGLGWocngJuQ/edit?usp=sharing"
+                    conn = st.connection("gsheets", type=GSheetsConnection)
+                    
+                    df_existente = conn.read(spreadsheet=url_hoja, usecols=[0, 1, 2, 3, 4, 5, 6, 7], ttl=0)
+                    df_existente = df_existente.dropna(how="all")
+                    
+                    fecha_actual = datetime.now(ZoneInfo("America/Lima")).strftime("%Y-%m-%d %H:%M:%S")
+                    
+                    with st.spinner("Extrayendo porcentaje de efectividad para el registro central..."):
+                        proceso_nota = client.chat.completions.create(
+                            model="gpt-4o-mini",
+                            messages=[
+                                {"role": "system", "content": "Eres un asistente automatizado. Tu única tarea es leer el reporte de evaluación que te proporcionará el usuario y extraer el porcentaje de efectividad conseguido. Debes responder ÚNICAMENTE con el número seguido del símbolo '%' (por ejemplo: '85%' o '0%'). No incluyas texto adicional, ni saludos, ni explicaciones, ni puntos."},
+                                {"role": "user", "content": st.session_state.reporte_final}
+                            ]
+                        )
+                        solo_porcentaje = proceso_nota.choices[0].message.content.strip()
+                    
+                    nueva_fila = pd.DataFrame([{
+                        "Fecha": fecha_actual,
+                        "Estudiante": nombre_estudiante if nombre_estudiante else "Anónimo",
+                        "Docente": docente_seleccionado,
+                        "Curso": curso_seleccionado,
+                        "Caso_Evaluado": caso_seleccionado,
+                        "Historial_Completo": st.session_state.conversacion_texto,
+                        "Reporte_Evaluacion": st.session_state.reporte_final,
+                        "Porcentaje_Efectividad": solo_porcentaje
+                    }])
+                    
+                    df_actualizado = pd.concat([df_existente, nueva_fila], ignore_index=True)
+                    conn.update(spreadsheet=url_hoja, data=df_actualizado)
+                    
+                    st.session_state.guardado_exitoso = True
+                    st.success(f"¡Logrado! Los resultados de {nombre_estudiante} se guardaron en la base central para el {curso_seleccionado} con una efectividad del {solo_porcentaje}.")
+                    st.rerun()
+                
+                except Exception as e:
+                    st.error(f"Error al escribir en la nube: {e}")
+    else:
+        st.info(f"✅ ¡Tu participación ya se encuentra registrada en la base central con éxito, {nombre_estudiante}! Puedes cerrar la pestaña o el navegador.")
 
     if st.button("🔄 Reiniciar Caso Actual", use_container_width=True):
         st.session_state.historial = [{"role": "system", "content": datos_caso["prompt_sistema"]}]
         st.session_state.fase = "chat"
         st.session_state.conversacion_texto = ""
         st.session_state.reporte_final = ""
+        st.session_state.guardado_exitoso = False
         st.rerun()
 
 # --- HISTORIAL VISUAL DE LA CONVERSACIÓN ---
