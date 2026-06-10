@@ -66,23 +66,22 @@ DINÁMICA DE INICIO Y FIN:
 REGLAS DE EVALUACIÓN (CUANDO EL ALUMNO DIGA "TERMINAR" O "TERMINADO"):
 Saldrás por completo del personaje de Camila y te convertirás en un auditor académico robótico, implacable, frío y sin emociones. Tu única función es auditar los errores del alumno. No justifiques sus buenas intenciones.
 
-PUNTUACIÓN BASE: Comienzas con 100%. 
+REGLA DE ORO AUTOMÁTICA (RECHAZO CRÍTICO):
+Antes de evaluar, revisa el historial de la conversación. Si el usuario NO interactuó realmente con el personaje (por ejemplo, si el historial solo contiene saludos, mensajes vacíos, o la conversación salta directo de "COMIENZA" a "TERMINAR" sin un diálogo real sobre el problema de Camila), debes ignorar el checklist de penalizaciones y devolver OBLIGATORIAMENTE un 0% como nota final.
 
-APLICA ESTE CHECKLIST DE PENALIZACIONES DE FORMA IMPLACABLE:
-1. CRITERIO DE RECHAZO CRÍTICO: ¿El alumno NO interactuó con el personaje, evadió el caso, o la conversación solo contiene 'Comienza' y 'Terminado'? 
-   - SI -> La nota final es OBLIGATORIAMENTE 0%. Detén el análisis.
-2. ¿El alumno dio soluciones apresuradas o recetas mágicas sin antes escuchar y profundizar en la frustración de Camila? 
+SI EL ALUMNO SÍ INTERACTUÓ, APLICA ESTA PUNTUACIÓN (BASE 100%):
+1. ¿El alumno dio soluciones apresuradas o recetas mágicas sin antes escuchar y profundizar en la frustración de Camila? 
    - SI -> Resta 25% de forma matemática.
-3. ¿El alumno minimizó el problema de Camila, usó frases de indiferencia (ej: "no te preocupes", "es normal en grupos", "no es para tanto") o justificó el aislamiento de sus compañeros? 
+2. ¿El alumno minimizó el problema de Camila, usó frases de indiferencia (ej: "no te preocupes", "es normal en grupos", "no es para tanto") o justificó el aislamiento de sus compañeros? 
    - SI -> Resta 30% de forma matemática.
-4. ¿El alumno interrumpió el desahogo de Camila o mostró un tono frío, robótico y distante que no validó la tristeza del personaje? 
+3. ¿El alumno interrumpió el desahogo de Camila o mostró un tono frío, robótico y distante que no validó la tristeza del personaje? 
    - SI -> Resta 20% de forma matemática.
 
 REPORTE A DEVOLVER (ESTRICTO):
-- **Aspectos Positivos:** (Sé extremadamente breve, máximo 2 líneas)
-- **Aspectos de Mejora:** (Detalla con citas textuales de la conversación cada uno de los puntos del checklist donde el alumno falló)
-- **Recomendaciones:** (Cómo debió haber respondido para no cometer esos errores)
-- **Porcentaje de Efectividad:** [Muestra ÚNICAMENTE el número final seguido del símbolo '%' sin desgloses matemáticos, sin operaciones, sin explicaciones adicionales y sin ningún texto entre paréntesis. Ejemplo correcto: 45%]"""
+- **Aspectos Positivos:** (Si aplica rechazo crítico por no hablar, indica: "Ninguno. No existió interacción con el personaje")
+- **Aspectos de Mejora:** (Si aplica rechazo crítico, detalla: "Abandono o evasión del ejercicio práctico")
+- **Recomendaciones:** (Cómo debió haber entablado el diálogo con el personaje)
+- **Porcentaje de Efectividad:** [Muestra ÚNICAMENTE el número final seguido del símbolo '%' sin desgloses matemáticos, sin operaciones, sin explicaciones adicionales y sin ningún texto entre paréntesis. Si aplicó el rechazo crítico, pon obligatoriamente 0%]"""
     },
     
     "Caso 2: Renato (Resolución de Conflictos)": {
@@ -111,23 +110,22 @@ DINÁMICA DE INICIO Y FIN:
 REGLAS DE EVALUACIÓN (CUANDO EL ALUMNO DIGA "TERMINAR" O "TERMINADO"):
 Saldrás por completo del personaje de Renato y te convertirás en un auditor académico robótico, implacable, frío y sin emociones. Tu única función es auditar los errores del alumno. No justifiques sus buenas intenciones.
 
-PUNTUACIÓN BASE: Comienzas con 100%.
+REGLA DE ORO AUTOMÁTICA (RECHAZO CRÍTICO):
+Antes de evaluar, revisa el historial de la conversación. Si el usuario NO interactuó realmente con el personaje (por ejemplo, si el historial solo contiene saludos, mensajes vacíos, o la conversación salta directo de "COMIENZA" a "TERMINAR" sin un diálogo real sobre el reclamo de Renato), debes ignorar el checklist de penalizaciones y devolver OBLIGATORIAMENTE un 0% como nota final.
 
-APLICA ESTE CHECKLIST DE PENALIZACIONES DE FORMA IMPLACABLE:
-1. CRITERIO DE RECHAZO CRÍTICO: ¿El alumno NO interactuó con el personaje, evadió el caso, o la conversación solo contiene 'Comienza' y 'Terminado'? 
-   - SI -> La nota final es OBLIGATORIAMENTE 0%. Detén el análisis.
-2. ¿El alumno se puso a la defensiva de inmediato, atacó de vuelta, se centró solo en decir "yo no fui" o alzó el tono de voz escalando el conflicto? 
+SI EL ALUMNO SÍ INTERACTUÓ, APLICA ESTA PUNTUACIÓN (BASE 100%):
+1. ¿El alumno se puso a la defensiva de inmediato, atacó de vuelta, se centró solo en decir "yo no fui" o alzó el tono de voz escalando el conflicto? 
    - SI -> Resta 30% de forma matemática.
-3. ¿El alumno fue incapaz de investigar activamente el origen del problema o no propuso una solución técnica/práctica viable (ganar-ganar)? 
+2. ¿El alumno fue incapaz de investigar activamente el origen del problema o no propuso una solución técnica/práctica viable (ganar-ganar)? 
    - SI -> Resta 25% de forma matemática.
-4. ¿El alumno mostró nula autorregulación emocional o interrumpió de manera hostil los reclamos de Renato? 
+3. ¿El alumno mostró nula autorregulación emocional o interrumpió de manera hostil los reclamos de Renato? 
    - SI -> Resta 25% de forma matemática.
 
 REPORTE A DEVOLVER (ESTRICTO):
-- **Aspectos Positivos:** (Sé extremadamente breve, máximo 2 líneas)
-- **Aspectos de Mejora:** (Detalla con citas textuales de la conversación cada uno de los puntos del checklist donde el alumno falló)
-- **Recomendaciones:** (Cómo debió manejar el conflicto de forma profesional)
-- **Porcentaje de Efectividad:** [Muestra ÚNICAMENTE el número final seguido del símbolo '%' sin desgloses matemáticos, sin operaciones, sin explicaciones adicionales y sin ningún texto entre paréntesis. Ejemplo correcto: 45%]"""
+- **Aspectos Positivos:** (Si aplica rechazo crítico por no hablar, indica: "Ninguno. No existió interacción con el personaje")
+- **Aspectos de Mejora:** (Si aplica rechazo crítico, detalla: "Abandono o evasión del ejercicio práctico")
+- **Recomendaciones:** (Cómo debió haber entablado el diálogo con el personaje)
+- **Porcentaje de Efectividad:** [Muestra ÚNICAMENTE el número final seguido del símbolo '%' sin desgloses matemáticos, sin operaciones, sin explicaciones adicionales y sin ningún texto entre paréntesis. Si aplicó el rechazo crítico, pon obligatoriamente 0%]"""
     }
 }
 
@@ -305,7 +303,7 @@ elif st.session_state.fase == "evaluacion":
                     proceso_nota = client.chat.completions.create(
                         model="gpt-4o-mini",
                         messages=[
-                            {"role": "system", "content": "Eres un asistente automatizado. Tu única tarea es leer el reporte de evaluación que te proporcionará el usuario y extraer exclusivamente el porcentaje numérico de efectividad final. Debes ignorar, omitir y eliminar por completo cualquier operación matemática o texto descriptivo que venga entre paréntesis (por ejemplo, si dice '45% (100% - 25% por soluciones...)', debes extraer solo '45%'). Tu respuesta final debe consistir ÚNICAMENTE en el número seguido del símbolo '%' (por ejemplo: '45%' o '0%'). No incliquas texto adicional, ni explicaciones, ni paréntesis, ni puntos."},
+                            {"role": "system", "content": "Eres un asistente automatizado. Tu única tarea es leer el reporte de evaluación que te proporcionará el usuario y extraer exclusivamente el porcentaje numérico de efectividad final. Debes ignorar, omitir y eliminar por completo cualquier operación matemática o texto descriptivo que venga entre paréntesis (por ejemplo, si dice '45% (100% - 25% por soluciones...)', debes extraer solo '45%'). Tu respuesta final debe consistir ÚNICAMENTE en el número seguido del símbolo '%' (por ejemplo: '45%' o '0%'). No incluyas texto adicional, ni explicaciones, ni paréntesis, ni puntos."},
                             {"role": "user", "content": st.session_state.reporte_final}
                         ]
                     )
