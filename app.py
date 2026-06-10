@@ -103,7 +103,12 @@ REPORTE A DEVOLVER (ESTRICTO):
 
 # --- 3. SELECCIÓN DE CASO DESDE LA BARRA LATERAL ---
 with st.sidebar:
-    st.markdown("""<div style="display: flex; justify-content: flex-end; margin-bottom: 0px; width: 100%;"><img src="https://www.toulouselautrec.edu.pe/sites/default/files/logo/logo-principal%402x.png" width="130"></div>""", unsafe_allow_html=True)
+    # --- CAMBIO AQUÍ: Lectura directa desde el servidor raw de GitHub ---
+    url_logo_github = "https://raw.githubusercontent.com/jsanchezhtls/simulador-habilidades/main/logo-original.png"
+    
+    # Usamos st.image pasándole la URL remota directamente
+    st.image(url_logo_github, width=140)
+        
     st.header("🧠 Centro de Simulación")
     caso_seleccionado = st.selectbox("Selecciona el caso a evaluar:", list(CASOS.keys()))
     st.markdown("---")
