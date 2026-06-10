@@ -106,8 +106,13 @@ with st.sidebar:
     # --- CAMBIO AQUÍ: Lectura directa desde el servidor raw de GitHub ---
     url_logo_github = "https://raw.githubusercontent.com/jsanchezhtls/simulador-habilidades/main/logo-original.png"
     
-    # Usamos st.image pasándole la URL remota directamente
-    st.image(url_logo_github, width=140)
+    # --- AJUSTE DE ALINEACIÓN ---
+    # Usamos HTML con flexbox alineado a la derecha ('flex-end') para forzar la posición exacta de la imagen
+    st.markdown(f"""
+        <div style="display: flex; justify-content: flex-end; width: 100%; margin-bottom: 5px;">
+            <img src="{url_logo_github}" width="140">
+        </div>
+        """, unsafe_allow_html=True)
         
     st.header("🧠 Centro de Simulación")
     caso_seleccionado = st.selectbox("Selecciona el caso a evaluar:", list(CASOS.keys()))
