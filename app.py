@@ -26,14 +26,6 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# --- USUARIOS DE RESPALDO EN MEMORIA ---
-USUARIOS_DEFAULT = [
-    {"Correo": "2025123456@talento.tls.edu.pe", "Contraseña": "12345678", "Nombre_Completo": "Luisa Arévalo", "Rol": "estudiante"},
-    {"Correo": "2025123457@talento.tls.edu.pe", "Contraseña": "12345678", "Nombre_Completo": "Gianfranco Moreno", "Rol": "estudiante"},
-    {"Correo": "jsanchezh@talento.tls.edu.pe", "Contraseña": "12345678", "Nombre_Completo": "José Sánchez", "Rol": "docente"},
-    {"Correo": "ycampos@talento.tls.edu.pe", "Contraseña": "12345678", "Nombre_Completo": "Yesenia Campos", "Rol": "docente"}
-]
-
 # --- CONTROL DE SESIÓN ---
 if "autenticado" not in st.session_state:
     st.session_state.autenticado = False
@@ -44,9 +36,9 @@ def verificar_credenciales(correo, password):
     correo_clean = correo.strip().lower()
     pass_clean = password.strip()
     
-    # Intentar verificar contra Google Sheets
     try:
         conn = st.connection("gsheets", type=GSheetsConnection)
+        # Lectura directa desde la pestaña 'Usuarios' en Google Sheets
         df_usuarios = conn.read(spreadsheet=URL_HOJA, worksheet="Usuarios", ttl=0).dropna(how="all")
         df_usuarios["Correo"] = df_usuarios["Correo"].astype(str).str.strip().str.lower()
         df_usuarios["Contraseña"] = df_usuarios["Contraseña"].astype(str).str.strip()
@@ -54,12 +46,9 @@ def verificar_credenciales(correo, password):
         match = df_usuarios[(df_usuarios["Correo"] == correo_clean) & (df_usuarios["Contraseña"] == pass_clean)]
         if not match.empty:
             return match.iloc[0].to_dict()
-    except Exception:
-        pass  # Fallback a credenciales en memoria si no existe la pestaña en Sheets
+    except Exception as e:
+        st.error(f"Error de conexión con la base de datos de usuarios: {e}")
         
-    for u in USUARIOS_DEFAULT:
-        if u["Correo"].lower() == correo_clean and u["Contraseña"] == pass_clean:
-            return u
     return None
 
 # --- PANTALLA DE LOGIN ---
@@ -76,14 +65,14 @@ if not st.session_state.autenticado:
             if not correo_input or not pass_input:
                 st.warning("Por favor completa ambos campos.")
             else:
-                with st.spinner("Validando usuario..."):
+                with st.spinner("Validando usuario en la base de datos..."):
                     datos = verificar_credenciales(correo_input, pass_input)
                     if datos:
                         st.session_state.autenticado = True
                         st.session_state.usuario_actual = datos
                         st.rerun()
                     else:
-                        st.error("Correo o contraseña incorrectos.")
+                        st.error("Correo o contraseña incorrectos. Verifica tus datos.")
 
 # --- APLICACIÓN PRINCIPAL (AUTENTICADO) ---
 else:
@@ -97,7 +86,7 @@ else:
             """, unsafe_allow_html=True)
         
         st.write(f"👤 **{st.session_state.usuario_actual['Nombre_Completo']}**")
-        st.caption(f"Rol: **{st.session_state.usuario_actual['Rol'].capitalize()}**")
+        st.caption(f"Rol: **{str(st.session_state.usuario_actual['Rol']).capitalize()}**")
         if st.button("🚪 Cerrar Sesión", use_container_width=True):
             st.session_state.autenticado = False
             st.session_state.usuario_actual = None
@@ -205,8 +194,8 @@ REPORTE A DEVOLVER (ESTRICTO):
 
         st.markdown("#### 👤 Datos de la Sesión:")
         
-        # Lógica de autocompletado según el Rol
-        if st.session_state.usuario_actual["Rol"] == "estudiante":
+        # Autocompletado del nombre según Rol
+        if str(st.session_state.usuario_actual["Rol"]).strip().lower() == "estudiante":
             nombre_estudiante = st.session_state.usuario_actual["Nombre_Completo"]
             st.text_input("Estudiante asignado:", value=nombre_estudiante, disabled=True)
         else:
@@ -381,8 +370,10 @@ REPORTE A DEVOLVER (ESTRICTO):
             df_historico["Efectividad_Num"] = pd.to_numeric(df_historico["Efectividad_Num"], errors="coerce").fillna(0)
             df_historico["Fecha"] = pd.to_datetime(df_historico["Fecha"], errors="coerce")
             
+            rol_actual = str(st.session_state.usuario_actual["Rol"]).strip().lower()
+
             # VISUALIZACIÓN PARA EL ROL ESTUDIANTE
-            if st.session_state.usuario_actual["Rol"] == "estudiante":
+            if rol_actual == "estudiante":
                 mi_nombre = st.session_state.usuario_actual["Nombre_Completo"]
                 df_mi_progreso = df_historico[df_historico["Estudiante"].astype(str).str.strip().str.lower() == mi_nombre.strip().lower()].sort_values("Fecha")
                 
