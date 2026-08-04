@@ -65,7 +65,6 @@ def obtener_lista_docentes():
         df_usuarios.columns = [str(col).strip() for col in df_usuarios.columns]
         
         if "Rol" in df_usuarios.columns and "Nombre_Completo" in df_usuarios.columns:
-            # Filtrar por rol 'docente' (sin importar mayúsculas/minúsculas)
             mask_docentes = df_usuarios["Rol"].astype(str).str.strip().str.lower() == "docente"
             lista_docentes = df_usuarios[mask_docentes]["Nombre_Completo"].dropna().unique().tolist()
             
@@ -236,13 +235,22 @@ REPORTE A DEVOLVER (ESTRICTO):
 
         col_docente, col_curso = st.columns(2)
         
-        # --- LECTURA DINÁMICA DE LA LISTA DE DOCENTES DESDE LA HOJA 'USUARIOS' ---
+        # LECTURA DINÁMICA DE LA LISTA DE DOCENTES DESDE LA HOJA 'USUARIOS'
         docentes_disponibles = obtener_lista_docentes()
+        
+        # LISTA ACTUALIZADA DE CURSOS
+        cursos_disponibles = [
+            "Estrategia Personal",
+            "Inteligencia Relacional",
+            "Comunicación Efectiva",
+            "Trabajo en Equipo",
+            "Liderazgo Estratégico"
+        ]
         
         with col_docente: 
             docente_seleccionado = st.selectbox("Selecciona tu docente:", docentes_disponibles, key="docente_sel")
         with col_curso: 
-            curso_seleccionado = st.selectbox("Selecciona tu curso:", ["Habilidades Blandas 1", "Liderazgo y Gestión", "Comunicación Efectiva"], key="curso_sel")
+            curso_seleccionado = st.selectbox("Selecciona tu curso:", cursos_disponibles, key="curso_sel")
 
         st.warning("🗣️ **Instrucciones:**\n1. Verifica tus datos arriba.\n2. Presiona **'🚀 Iniciar Simulación'**.\n3. Graba tu voz para interactuar.\n4. Al finalizar, presiona **'🏁 Finalizar y Evaluar'**.")
 
@@ -457,6 +465,9 @@ REPORTE A DEVOLVER (ESTRICTO):
                     
                     st.subheader("📋 Detalle de Interacciones")
                     st.dataframe(df_estudiante_sel[["Fecha", "Caso_Evaluado", "Curso", "Porcentaje_Efectividad"]], use_container_width=True)
+
+        except Exception as e:
+            st.error(f"No se pudieron cargar los datos de progreso desde la nube: {e}")
 
         except Exception as e:
             st.error(f"No se pudieron cargar los datos de progreso desde la nube: {e}")
