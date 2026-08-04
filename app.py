@@ -14,7 +14,7 @@ URL_HOJA = "https://docs.google.com/spreadsheets/d/1wRZoKUEbvVfrETp7aUnjyzl9qNW9
 
 st.set_page_config(page_title="Simulador de Habilidades Blandas", page_icon="🎙️", layout="centered")
 
-# --- OCULTAR ELEMENTOS DE INTERFAZ ---
+# --- OCULTAR ELEMENTOS DERECHOS ---
 st.markdown("""
     <style>
     #stMainMenu, .stAppDeployButton, button[title="Manage app"], iframe[title="streamlit-modal"] {
@@ -32,26 +32,40 @@ if "autenticado" not in st.session_state:
 if "usuario_actual" not in st.session_state:
     st.session_state.usuario_actual = None
 
+# --- FUNCIÓN DE AUTENTICACIÓN ROBUSTA (VÍA CSV DIRECTO) ---
 def verificar_credenciales(correo, password):
     correo_clean = correo.strip().lower()
-    pass_clean = password.strip()
+    pass_clean = str(password).strip()
+    
+    sheet_id = "1wRZoKUEbvVfrETp7aUnjyzl9qNW99XhbGLGWocngJuQ"
+    sheet_name = "Usuarios"
+    url_csv = f"https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet={sheet_name}"
     
     try:
-        conn = st.connection("gsheets", type=GSheetsConnection)
-        # Lectura directa desde la pestaña 'Usuarios' en Google Sheets
-        df_usuarios = conn.read(spreadsheet=URL_HOJA, worksheet="Usuarios", ttl=0).dropna(how="all")
-        df_usuarios["Correo"] = df_usuarios["Correo"].astype(str).str.strip().str.lower()
-        df_usuarios["Contraseña"] = df_usuarios["Contraseña"].astype(str).str.strip()
+        df_usuarios = pd.read_csv(url_csv)
+        df_usuarios = df_usuarios.dropna(how="all")
         
-        match = df_usuarios[(df_usuarios["Correo"] == correo_clean) & (df_usuarios["Contraseña"] == pass_clean)]
-        if not match.empty:
-            return match.iloc[0].to_dict()
+        # Limpiar espacios invisibles en nombres de columnas
+        df_usuarios.columns = [str(col).strip() for col in df_usuarios.columns]
+
+        if "Correo" in df_usuarios.columns and "Contraseña" in df_usuarios.columns:
+            df_usuarios["Correo"] = df_usuarios["Correo"].astype(str).str.strip().str.lower()
+            df_usuarios["Contraseña"] = df_usuarios["Contraseña"].astype(str).str.strip().str.replace(".0", "", regex=False)
+            
+            match = df_usuarios[(df_usuarios["Correo"] == correo_clean) & (df_usuarios["Contraseña"] == pass_clean)]
+            if not match.empty:
+                return match.iloc[0].to_dict()
+        else:
+            st.error("⚠️ No se encontraron las columnas 'Correo' o 'Contraseña' en la hoja Usuarios.")
+            
     except Exception as e:
-        st.error(f"Error de conexión con la base de datos de usuarios: {e}")
+        st.error(f"Error al conectar con la base de datos de usuarios: {e}")
         
     return None
 
-# --- PANTALLA DE LOGIN ---
+# ==========================================
+# PANTALLA DE LOGIN
+# ==========================================
 if not st.session_state.autenticado:
     st.title("🔐 Acceso al Simulador")
     st.caption("Ingresa con tus credenciales institucionales de Toulouse Lautrec.")
@@ -65,7 +79,7 @@ if not st.session_state.autenticado:
             if not correo_input or not pass_input:
                 st.warning("Por favor completa ambos campos.")
             else:
-                with st.spinner("Validando usuario en la base de datos..."):
+                with st.spinner("Validando credenciales..."):
                     datos = verificar_credenciales(correo_input, pass_input)
                     if datos:
                         st.session_state.autenticado = True
@@ -74,9 +88,11 @@ if not st.session_state.autenticado:
                     else:
                         st.error("Correo o contraseña incorrectos. Verifica tus datos.")
 
-# --- APLICACIÓN PRINCIPAL (AUTENTICADO) ---
+# ==========================================
+# APLICACIÓN PRINCIPAL (USUARIO AUTENTICADO)
+# ==========================================
 else:
-    # --- BARRA LATERAL GENERAL ---
+    # --- BARRA LATERAL ---
     with st.sidebar:
         url_logo_github = "https://raw.githubusercontent.com/jsanchezhtls/simulador-habilidades/main/logo-original.png"
         st.markdown(f"""
@@ -87,13 +103,15 @@ else:
         
         st.write(f"👤 **{st.session_state.usuario_actual['Nombre_Completo']}**")
         st.caption(f"Rol: **{str(st.session_state.usuario_actual['Rol']).capitalize()}**")
+        
         if st.button("🚪 Cerrar Sesión", use_container_width=True):
             st.session_state.autenticado = False
             st.session_state.usuario_actual = None
             st.rerun()
+            
         st.markdown("---")
 
-    # --- NAVEGACIÓN EN PESTAÑAS ---
+    # --- PESTAÑAS PRINCIPALES ---
     tab_simulador, tab_progreso = st.tabs(["🎙️ ¡Simular Ahora!", "📊 Mi Progreso"])
 
     # ==========================================
@@ -177,6 +195,7 @@ REPORTE A DEVOLVER (ESTRICTO):
         caso_seleccionado = st.selectbox("Selecciona el caso a evaluar:", list(CASOS.keys()))
         datos_caso = CASOS[caso_seleccionado]
 
+        # CONTROL DE ESTADO INTERNO DEL CASO
         if "caso_actual" not in st.session_state or st.session_state.caso_actual != caso_seleccionado:
             st.session_state.caso_actual = caso_seleccionado
             st.session_state.historial = [{"role": "system", "content": datos_caso["prompt_sistema"]}]
@@ -194,8 +213,9 @@ REPORTE A DEVOLVER (ESTRICTO):
 
         st.markdown("#### 👤 Datos de la Sesión:")
         
-        # Autocompletado del nombre según Rol
-        if str(st.session_state.usuario_actual["Rol"]).strip().lower() == "estudiante":
+        # Lógica de autocompletado según el Rol del usuario en sesión
+        es_estudiante = str(st.session_state.usuario_actual["Rol"]).strip().lower() == "estudiante"
+        if es_estudiante:
             nombre_estudiante = st.session_state.usuario_actual["Nombre_Completo"]
             st.text_input("Estudiante asignado:", value=nombre_estudiante, disabled=True)
         else:
@@ -209,6 +229,7 @@ REPORTE A DEVOLVER (ESTRICTO):
 
         st.warning("🗣️ **Instrucciones:**\n1. Verifica tus datos arriba.\n2. Presiona **'🚀 Iniciar Simulación'**.\n3. Graba tu voz para interactuar.\n4. Al finalizar, presiona **'🏁 Finalizar y Evaluar'**.")
 
+        # --- FASE CHAT DE VOZ ---
         if st.session_state.fase == "chat":
             col_btn1, col_btn2 = st.columns(2)
             
@@ -300,6 +321,7 @@ REPORTE A DEVOLVER (ESTRICTO):
                 else:
                     st.info("⚠️ Ingresa tu nombre en el cuadro superior para desbloquear los controles de la simulación.")
 
+        # --- FASE FINA DE EVALUACIÓN Y GUARDADO ---
         elif st.session_state.fase == "evaluacion":
             st.success("🏁 ¡Simulación Finalizada!")
             st.markdown("## 📊 Reporte de Evaluación")
@@ -315,7 +337,7 @@ REPORTE A DEVOLVER (ESTRICTO):
                 if boton_guardar:
                     try:
                         conn = st.connection("gsheets", type=GSheetsConnection)
-                        df_existente = conn.read(spreadsheet=URL_HOJA, usecols=[0, 1, 2, 3, 4, 5, 6, 7], ttl=0).dropna(how="all")
+                        df_existente = conn.read(spreadsheet=URL_HOJA, worksheet="Hoja 1", usecols=[0, 1, 2, 3, 4, 5, 6, 7], ttl=0).dropna(how="all")
                         fecha_actual = datetime.now(ZoneInfo("America/Lima")).strftime("%Y-%m-%d %H:%M:%S")
                         
                         with st.spinner("Extrayendo porcentaje de efectividad..."):
@@ -336,7 +358,7 @@ REPORTE A DEVOLVER (ESTRICTO):
                         }])
                         
                         df_actualizado = pd.concat([df_existente, nueva_fila], ignore_index=True)
-                        conn.update(spreadsheet=URL_HOJA, data=df_actualizado)
+                        conn.update(spreadsheet=URL_HOJA, worksheet="Hoja 1", data=df_actualizado)
                         st.success(f"¡Logrado! Guardado con una efectividad del {solo_porcentaje}.")
                     except Exception as e:
                         st.error(f"Error al escribir en la nube: {e}")
@@ -362,17 +384,20 @@ REPORTE A DEVOLVER (ESTRICTO):
         st.header("📊 Panel de Progreso y Evaluación Longitudinal")
         
         try:
-            conn = st.connection("gsheets", type=GSheetsConnection)
-            df_historico = conn.read(spreadsheet=URL_HOJA, usecols=[0, 1, 2, 3, 4, 5, 6, 7], ttl=0).dropna(how="all")
+            # Lectura directa desde Hoja 1 mediante el endpoint CSV de Google Sheets para evitar bloqueos
+            sheet_id = "1wRZoKUEbvVfrETp7aUnjyzl9qNW99XhbGLGWocngJuQ"
+            url_csv_hoja1 = f"https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet=Hoja 1"
             
-            # Limpieza de columna de porcentaje a numérico
+            df_historico = pd.read_csv(url_csv_hoja1).dropna(how="all")
+            
+            # Formateo de tipos de datos
             df_historico["Efectividad_Num"] = df_historico["Porcentaje_Efectividad"].astype(str).str.replace("%", "").str.strip()
             df_historico["Efectividad_Num"] = pd.to_numeric(df_historico["Efectividad_Num"], errors="coerce").fillna(0)
             df_historico["Fecha"] = pd.to_datetime(df_historico["Fecha"], errors="coerce")
             
             rol_actual = str(st.session_state.usuario_actual["Rol"]).strip().lower()
 
-            # VISUALIZACIÓN PARA EL ROL ESTUDIANTE
+            # VISUALIZACIÓN ROL ESTUDIANTE
             if rol_actual == "estudiante":
                 mi_nombre = st.session_state.usuario_actual["Nombre_Completo"]
                 df_mi_progreso = df_historico[df_historico["Estudiante"].astype(str).str.strip().str.lower() == mi_nombre.strip().lower()].sort_values("Fecha")
@@ -397,7 +422,7 @@ REPORTE A DEVOLVER (ESTRICTO):
                             st.markdown(f"**Docente:** {row['Docente']}")
                             st.markdown(f"**Reporte:**\n{row['Reporte_Evaluacion']}")
 
-            # VISUALIZACIÓN PARA EL ROL DOCENTE
+            # VISUALIZACIÓN ROL DOCENTE
             else:
                 mi_nombre_docente = st.session_state.usuario_actual["Nombre_Completo"]
                 df_docente = df_historico[df_historico["Docente"].astype(str).str.strip().str.lower() == mi_nombre_docente.strip().lower()]
@@ -410,7 +435,6 @@ REPORTE A DEVOLVER (ESTRICTO):
                     st.caption(f"Visualizando resultados de tus {len(estudiantes_lista)} estudiantes asignados.")
                     
                     estudiante_sel = st.selectbox("Selecciona un estudiante para revisar su perfil:", estudiantes_lista)
-                    
                     df_estudiante_sel = df_docente[df_docente["Estudiante"] == estudiante_sel].sort_values("Fecha")
                     
                     c1, c2 = st.columns(2)
