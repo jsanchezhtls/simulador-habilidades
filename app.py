@@ -79,7 +79,7 @@ def obtener_lista_docentes():
 # PANTALLA DE LOGIN
 # ==========================================
 if not st.session_state.autenticado:
-    st.title("🔐 Acceso al Simulador")
+    st.title("🔐 Simulador de Habilidades")
     st.caption("Ingresa con tus credenciales institucionales de Toulouse Lautrec.")
     
     with st.form(key="form_login"):
