@@ -5,6 +5,7 @@ from streamlit_gsheets import GSheetsConnection
 from datetime import datetime
 from zoneinfo import ZoneInfo
 import pandas as pd
+import altair as alt
 import os
 
 # --- 1. CONFIGURACIÓN DE APIS Y PÁGINA ---
@@ -79,7 +80,7 @@ def obtener_lista_docentes():
 # PANTALLA DE LOGIN
 # ==========================================
 if not st.session_state.autenticado:
-    st.title("🔐 Simulador de Habilidades")
+    st.title("🔐 Acceso al Simulador")
     st.caption("Ingresa con tus credenciales institucionales de Toulouse Lautrec.")
     
     with st.form(key="form_login"):
@@ -412,12 +413,20 @@ REPORTE A DEVOLVER (ESTRICTO):
             conn = st.connection("gsheets", type=GSheetsConnection)
             df_historico = conn.read(spreadsheet=URL_HOJA, worksheet="Hoja 1", ttl=0).dropna(how="all")
             
+            # --- NORMALIZACIÓN DEL PORCENTAJE ---
             df_historico["Efectividad_Num"] = df_historico["Porcentaje_Efectividad"].astype(str).str.replace("%", "").str.strip()
             df_historico["Efectividad_Num"] = pd.to_numeric(df_historico["Efectividad_Num"], errors="coerce").fillna(0)
+            
+            # Si el valor en Sheets viene como decimal (ej. 0.25 en lugar de 25), lo multiplicamos por 100
+            df_historico["Efectividad_Num"] = df_historico["Efectividad_Num"].apply(lambda x: x * 100 if 0 < x <= 1.0 else x)
+            
             df_historico["Fecha"] = pd.to_datetime(df_historico["Fecha"], errors="coerce")
             
             rol_actual = str(st.session_state.usuario_actual["Rol"]).strip().lower()
 
+            # ------------------------------------------
+            # VISTA PARA ESTUDIANTES
+            # ------------------------------------------
             if rol_actual == "estudiante":
                 mi_nombre = st.session_state.usuario_actual["Nombre_Completo"]
                 df_mi_progreso = df_historico[df_historico["Estudiante"].astype(str).str.strip().str.lower() == mi_nombre.strip().lower()].sort_values("Fecha")
@@ -433,15 +442,25 @@ REPORTE A DEVOLVER (ESTRICTO):
                     c2.metric("Simulaciones Realizadas", total_casos)
                     
                     st.subheader("📈 Mi Curva de Aprendizaje")
-                    st.line_chart(df_mi_progreso.set_index("Fecha")["Efectividad_Num"])
+                    
+                    # Gráfico con eje Y de 0 a 100
+                    chart_estudiante = alt.Chart(df_mi_progreso).mark_line(point=True).encode(
+                        x=alt.X('Fecha:T', title='Fecha y Hora'),
+                        y=alt.Y('Efectividad_Num:Q', title='Porcentaje (%)', scale=alt.Scale(domain=[0, 100])),
+                        tooltip=['Fecha', 'Caso_Evaluado', 'Efectividad_Num']
+                    ).properties(height=300)
+                    st.altair_chart(chart_estudiante, use_container_width=True)
                     
                     st.subheader("📋 Historial de Feedback")
                     for _, row in df_mi_progreso.iterrows():
                         fecha_str = row["Fecha"].strftime("%Y-%m-%d %H:%M") if pd.notnull(row["Fecha"]) else "Sin fecha"
-                        with st.expander(f"Caso: {row['Caso_Evaluado']} | Nota: {row['Porcentaje_Efectividad']} ({fecha_str})"):
+                        with st.expander(f"Caso: {row['Caso_Evaluado']} | Nota: {row['Efectividad_Num']:.1f}% ({fecha_str})"):
                             st.markdown(f"**Docente:** {row['Docente']}")
                             st.markdown(f"**Reporte:**\n{row['Reporte_Evaluacion']}")
 
+            # ------------------------------------------
+            # VISTA PARA DOCENTES
+            # ------------------------------------------
             else:
                 mi_nombre_docente = st.session_state.usuario_actual["Nombre_Completo"]
                 df_docente = df_historico[df_historico["Docente"].astype(str).str.strip().str.lower() == mi_nombre_docente.strip().lower()]
@@ -461,13 +480,41 @@ REPORTE A DEVOLVER (ESTRICTO):
                     c2.metric("Intentos Totales", len(df_estudiante_sel))
                     
                     st.subheader(f"📈 Evolución de {estudiante_sel}")
-                    st.line_chart(df_estudiante_sel.set_index("Fecha")["Efectividad_Num"])
                     
-                    st.subheader("📋 Detalle de Interacciones")
-                    st.dataframe(df_estudiante_sel[["Fecha", "Caso_Evaluado", "Curso", "Porcentaje_Efectividad"]], use_container_width=True)
-
-        except Exception as e:
-            st.error(f"No se pudieron cargar los datos de progreso desde la nube: {e}")
+                    # Gráfico con eje Y de 0 a 100
+                    chart_docente = alt.Chart(df_estudiante_sel).mark_line(point=True).encode(
+                        x=alt.X('Fecha:T', title='Fecha y Hora'),
+                        y=alt.Y('Efectividad_Num:Q', title='Porcentaje (%)', scale=alt.Scale(domain=[0, 100])),
+                        tooltip=['Fecha', 'Caso_Evaluado', 'Efectividad_Num']
+                    ).properties(height=300)
+                    st.altair_chart(chart_docente, use_container_width=True)
+                    
+                    # --- VISTA DETALLADA DE INTERACCIONES Y REPORTE PARA DOCENTE ---
+                    st.subheader("📋 Detalle de Interacciones y Reportes Evaluativos")
+                    
+                    for idx, row in df_estudiante_sel.iterrows():
+                        fecha_str = row["Fecha"].strftime("%Y-%m-%d %H:%M") if pd.notnull(row["Fecha"]) else "Sin fecha"
+                        nota_display = f"{row['Efectividad_Num']:.1f}%"
+                        
+                        with st.expander(f"📌 {fecha_str} | Caso: {row['Caso_Evaluado']} | Nota: {nota_display}"):
+                            st.markdown(f"**Curso:** {row.get('Curso', 'N/A')}")
+                            st.markdown("---")
+                            
+                            col_reporte, col_transcripcion = st.columns(2)
+                            
+                            with col_reporte:
+                                st.markdown("#### 📝 Reporte Evaluativo Recibido:")
+                                st.markdown(row.get("Reporte_Evaluacion", "Sin reporte registrado."))
+                                
+                            with col_transcripcion:
+                                st.markdown("#### 💬 Transcripción de la Conversación:")
+                                historial_txt = str(row.get("Historial_Completo", "Sin transcripción disponible."))
+                                st.text_area(
+                                    label="Historial de audio/texto:",
+                                    value=historial_txt,
+                                    height=300,
+                                    key=f"historial_docente_{idx}"
+                                )
 
         except Exception as e:
             st.error(f"No se pudieron cargar los datos de progreso desde la nube: {e}")
