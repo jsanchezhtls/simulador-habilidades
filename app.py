@@ -32,17 +32,14 @@ if "autenticado" not in st.session_state:
 if "usuario_actual" not in st.session_state:
     st.session_state.usuario_actual = None
 
-# --- FUNCIÓN DE AUTENTICACIÓN MEDIANTE SERVICE ACCOUNT (ST.CONNECTION) ---
+# --- FUNCIÓN DE AUTENTICACIÓN ---
 def verificar_credenciales(correo, password):
     correo_clean = correo.strip().lower()
     pass_clean = str(password).strip()
     
     try:
-        # Usa la Service Account autorizada en secrets.toml
         conn = st.connection("gsheets", type=GSheetsConnection)
         df_usuarios = conn.read(spreadsheet=URL_HOJA, worksheet="Usuarios", ttl=0).dropna(how="all")
-        
-        # Limpiar espacios invisibles en nombres de columnas
         df_usuarios.columns = [str(col).strip() for col in df_usuarios.columns]
 
         if "Correo" in df_usuarios.columns and "Contraseña" in df_usuarios.columns:
@@ -59,6 +56,25 @@ def verificar_credenciales(correo, password):
         st.error(f"Error al conectar con la base de datos de usuarios: {e}")
         
     return None
+
+# --- FUNCIÓN PARA OBTENER DOCENTES DINÁMICAMENTE ---
+def obtener_lista_docentes():
+    try:
+        conn = st.connection("gsheets", type=GSheetsConnection)
+        df_usuarios = conn.read(spreadsheet=URL_HOJA, worksheet="Usuarios", ttl=60).dropna(how="all")
+        df_usuarios.columns = [str(col).strip() for col in df_usuarios.columns]
+        
+        if "Rol" in df_usuarios.columns and "Nombre_Completo" in df_usuarios.columns:
+            # Filtrar por rol 'docente' (sin importar mayúsculas/minúsculas)
+            mask_docentes = df_usuarios["Rol"].astype(str).str.strip().str.lower() == "docente"
+            lista_docentes = df_usuarios[mask_docentes]["Nombre_Completo"].dropna().unique().tolist()
+            
+            if lista_docentes:
+                return sorted(lista_docentes)
+    except Exception as e:
+        st.warning(f"No se pudo cargar la lista de docentes en tiempo real: {e}")
+        
+    return ["Sin docentes registrados"]
 
 # ==========================================
 # PANTALLA DE LOGIN
@@ -219,8 +235,12 @@ REPORTE A DEVOLVER (ESTRICTO):
             nombre_estudiante = st.text_input("Ingresa el nombre del estudiante a evaluar:", key="input_nombre_docente")
 
         col_docente, col_curso = st.columns(2)
+        
+        # --- LECTURA DINÁMICA DE LA LISTA DE DOCENTES DESDE LA HOJA 'USUARIOS' ---
+        docentes_disponibles = obtener_lista_docentes()
+        
         with col_docente: 
-            docente_seleccionado = st.selectbox("Selecciona tu docente:", ["José Sánchez", "Yesenia Campos", "Otro Docente"], key="docente_sel")
+            docente_seleccionado = st.selectbox("Selecciona tu docente:", docentes_disponibles, key="docente_sel")
         with col_curso: 
             curso_seleccionado = st.selectbox("Selecciona tu curso:", ["Habilidades Blandas 1", "Liderazgo y Gestión", "Comunicación Efectiva"], key="curso_sel")
 
@@ -381,18 +401,15 @@ REPORTE A DEVOLVER (ESTRICTO):
         st.header("📊 Panel de Progreso y Evaluación Longitudinal")
         
         try:
-            # Lectura autorizada usando Service Account para evitar bloqueos HTTP 401
             conn = st.connection("gsheets", type=GSheetsConnection)
             df_historico = conn.read(spreadsheet=URL_HOJA, worksheet="Hoja 1", ttl=0).dropna(how="all")
             
-            # Formateo de tipos de datos
             df_historico["Efectividad_Num"] = df_historico["Porcentaje_Efectividad"].astype(str).str.replace("%", "").str.strip()
             df_historico["Efectividad_Num"] = pd.to_numeric(df_historico["Efectividad_Num"], errors="coerce").fillna(0)
             df_historico["Fecha"] = pd.to_datetime(df_historico["Fecha"], errors="coerce")
             
             rol_actual = str(st.session_state.usuario_actual["Rol"]).strip().lower()
 
-            # VISUALIZACIÓN ROL ESTUDIANTE
             if rol_actual == "estudiante":
                 mi_nombre = st.session_state.usuario_actual["Nombre_Completo"]
                 df_mi_progreso = df_historico[df_historico["Estudiante"].astype(str).str.strip().str.lower() == mi_nombre.strip().lower()].sort_values("Fecha")
@@ -417,7 +434,6 @@ REPORTE A DEVOLVER (ESTRICTO):
                             st.markdown(f"**Docente:** {row['Docente']}")
                             st.markdown(f"**Reporte:**\n{row['Reporte_Evaluacion']}")
 
-            # VISUALIZACIÓN ROL DOCENTE
             else:
                 mi_nombre_docente = st.session_state.usuario_actual["Nombre_Completo"]
                 df_docente = df_historico[df_historico["Docente"].astype(str).str.strip().str.lower() == mi_nombre_docente.strip().lower()]
@@ -441,9 +457,6 @@ REPORTE A DEVOLVER (ESTRICTO):
                     
                     st.subheader("📋 Detalle de Interacciones")
                     st.dataframe(df_estudiante_sel[["Fecha", "Caso_Evaluado", "Curso", "Porcentaje_Efectividad"]], use_container_width=True)
-
-        except Exception as e:
-            st.error(f"No se pudieron cargar los datos de progreso desde la nube: {e}")
 
         except Exception as e:
             st.error(f"No se pudieron cargar los datos de progreso desde la nube: {e}")
