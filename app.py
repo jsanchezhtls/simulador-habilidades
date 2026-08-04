@@ -124,8 +124,11 @@ else:
             
         st.markdown("---")
 
-    # --- PESTAÑAS PRINCIPALES ---
-    tab_simulador, tab_progreso = st.tabs(["🎙️ ¡Simular Ahora!", "📊 Mi Progreso"])
+    # --- PESTAÑAS PRINCIPALES (DINÁMICAS SEGÚN ROL) ---
+    es_docente = str(st.session_state.usuario_actual.get("Rol", "")).strip().lower() == "docente"
+    titulo_pestaña_2 = "📊 Progreso de Alumnos" if es_docente else "📊 Mi Progreso"
+
+    tab_simulador, tab_progreso = st.tabs(["🎙️ ¡Simular Ahora!", titulo_pestaña_2])
 
     # ==========================================
     # PESTAÑA 1: SIMULADOR DE VOZ
@@ -236,10 +239,7 @@ REPORTE A DEVOLVER (ESTRICTO):
 
         col_docente, col_curso = st.columns(2)
         
-        # LECTURA DINÁMICA DE LA LISTA DE DOCENTES DESDE LA HOJA 'USUARIOS'
         docentes_disponibles = obtener_lista_docentes()
-        
-        # LISTA ACTUALIZADA DE CURSOS
         cursos_disponibles = [
             "Estrategia Personal",
             "Inteligencia Relacional",
@@ -404,7 +404,7 @@ REPORTE A DEVOLVER (ESTRICTO):
             st.markdown(texto_con_iconos)
 
     # ==========================================
-    # PESTAÑA 2: MI PROGRESO / PANEL DOCENTE
+    # PESTAÑA 2: PROGRESO DE ALUMNOS / MI PROGRESO
     # ==========================================
     with tab_progreso:
         st.header("📊 Panel de Progreso y Evaluación Longitudinal")
