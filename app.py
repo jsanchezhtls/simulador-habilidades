@@ -32,18 +32,15 @@ if "autenticado" not in st.session_state:
 if "usuario_actual" not in st.session_state:
     st.session_state.usuario_actual = None
 
-# --- FUNCIÓN DE AUTENTICACIÓN ROBUSTA (VÍA CSV DIRECTO) ---
+# --- FUNCIÓN DE AUTENTICACIÓN MEDIANTE SERVICE ACCOUNT (ST.CONNECTION) ---
 def verificar_credenciales(correo, password):
     correo_clean = correo.strip().lower()
     pass_clean = str(password).strip()
     
-    sheet_id = "1wRZoKUEbvVfrETp7aUnjyzl9qNW99XhbGLGWocngJuQ"
-    sheet_name = "Usuarios"
-    url_csv = f"https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet={sheet_name}"
-    
     try:
-        df_usuarios = pd.read_csv(url_csv)
-        df_usuarios = df_usuarios.dropna(how="all")
+        # Usa la Service Account autorizada en secrets.toml
+        conn = st.connection("gsheets", type=GSheetsConnection)
+        df_usuarios = conn.read(spreadsheet=URL_HOJA, worksheet="Usuarios", ttl=0).dropna(how="all")
         
         # Limpiar espacios invisibles en nombres de columnas
         df_usuarios.columns = [str(col).strip() for col in df_usuarios.columns]
@@ -56,7 +53,7 @@ def verificar_credenciales(correo, password):
             if not match.empty:
                 return match.iloc[0].to_dict()
         else:
-            st.error("⚠️ No se encontraron las columnas 'Correo' o 'Contraseña' en la hoja Usuarios.")
+            st.error("⚠️ No se encontraron las columnas 'Correo' o 'Contraseña' en la pestaña Usuarios.")
             
     except Exception as e:
         st.error(f"Error al conectar con la base de datos de usuarios: {e}")
@@ -213,7 +210,7 @@ REPORTE A DEVOLVER (ESTRICTO):
 
         st.markdown("#### 👤 Datos de la Sesión:")
         
-        # Lógica de autocompletado según el Rol del usuario en sesión
+        # Autocompletado según el Rol
         es_estudiante = str(st.session_state.usuario_actual["Rol"]).strip().lower() == "estudiante"
         if es_estudiante:
             nombre_estudiante = st.session_state.usuario_actual["Nombre_Completo"]
@@ -321,7 +318,7 @@ REPORTE A DEVOLVER (ESTRICTO):
                 else:
                     st.info("⚠️ Ingresa tu nombre en el cuadro superior para desbloquear los controles de la simulación.")
 
-        # --- FASE FINA DE EVALUACIÓN Y GUARDADO ---
+        # --- FASE EVALUACIÓN Y GUARDADO ---
         elif st.session_state.fase == "evaluacion":
             st.success("🏁 ¡Simulación Finalizada!")
             st.markdown("## 📊 Reporte de Evaluación")
@@ -384,11 +381,9 @@ REPORTE A DEVOLVER (ESTRICTO):
         st.header("📊 Panel de Progreso y Evaluación Longitudinal")
         
         try:
-            # Lectura directa desde Hoja 1 mediante el endpoint CSV de Google Sheets para evitar bloqueos
-            sheet_id = "1wRZoKUEbvVfrETp7aUnjyzl9qNW99XhbGLGWocngJuQ"
-            url_csv_hoja1 = f"https://docs.google.com/spreadsheets/d/{sheet_id}/gviz/tq?tqx=out:csv&sheet=Hoja 1"
-            
-            df_historico = pd.read_csv(url_csv_hoja1).dropna(how="all")
+            # Lectura autorizada usando Service Account para evitar bloqueos HTTP 401
+            conn = st.connection("gsheets", type=GSheetsConnection)
+            df_historico = conn.read(spreadsheet=URL_HOJA, worksheet="Hoja 1", ttl=0).dropna(how="all")
             
             # Formateo de tipos de datos
             df_historico["Efectividad_Num"] = df_historico["Porcentaje_Efectividad"].astype(str).str.replace("%", "").str.strip()
@@ -446,6 +441,9 @@ REPORTE A DEVOLVER (ESTRICTO):
                     
                     st.subheader("📋 Detalle de Interacciones")
                     st.dataframe(df_estudiante_sel[["Fecha", "Caso_Evaluado", "Curso", "Porcentaje_Efectividad"]], use_container_width=True)
+
+        except Exception as e:
+            st.error(f"No se pudieron cargar los datos de progreso desde la nube: {e}")
 
         except Exception as e:
             st.error(f"No se pudieron cargar los datos de progreso desde la nube: {e}")
