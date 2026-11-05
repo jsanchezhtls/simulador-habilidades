@@ -207,7 +207,7 @@ REPORTE A DEVOLVER (ESTRICTO):
             }
         }
 
-        st.header("🧠 Centro de Simulación")
+        st.header("Centro de Simulación")
         caso_seleccionado = st.selectbox("Selecciona el caso a evaluar:", list(CASOS.keys()))
         datos_caso = CASOS[caso_seleccionado]
 
@@ -407,7 +407,7 @@ REPORTE A DEVOLVER (ESTRICTO):
     # PESTAÑA 2: PROGRESO DE ALUMNOS / MI PROGRESO
     # ==========================================
     with tab_progreso:
-        st.header("📊 Panel de Progreso y Evaluación Longitudinal")
+        st.header("Panel de Progreso")
         
         try:
             conn = st.connection("gsheets", type=GSheetsConnection)
