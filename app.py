@@ -7,11 +7,95 @@ from zoneinfo import ZoneInfo
 import pandas as pd
 import altair as alt
 import os
+import json
+import tempfile
+import uuid
 
 # --- 1. CONFIGURACIÓN DE APIS Y PÁGINA ---
 API_KEY_OPENAI = st.secrets["OPENAI_API_KEY"]
 client = OpenAI(api_key=API_KEY_OPENAI)
 URL_HOJA = "https://docs.google.com/spreadsheets/d/1wRZoKUEbvVfrETp7aUnjyzl9qNW99XhbGLGWocngJuQ/edit?usp=sharing"
+
+
+# --- FUNCIONES DE EVALUACIÓN PARA EL CASO CAMILA ---
+PESOS_CAMILA = {
+    "Reconocimiento emocional": 20,
+    "Escucha activa e indagación": 25,
+    "Validación emocional": 30,
+    "Comprensión de perspectivas": 15,
+    "Construcción conjunta de soluciones": 10,
+}
+
+def calcular_efectividad_camila(indicadores):
+    """Calcula el puntaje de forma determinista a partir de niveles 0-4."""
+    niveles_por_nombre = {item.get("nombre"): item.get("nivel", 0) for item in indicadores}
+    puntaje = 0.0
+    for nombre, peso in PESOS_CAMILA.items():
+        try:
+            nivel = int(niveles_por_nombre.get(nombre, 0))
+        except (TypeError, ValueError):
+            nivel = 0
+        nivel = max(0, min(4, nivel))
+        puntaje += (nivel / 4) * peso
+    return round(puntaje, 2)
+
+def normalizar_reporte_camila(reporte):
+    """Valida y completa el JSON devuelto por el modelo."""
+    indicadores_validos = []
+    recibidos = {i.get("nombre"): i for i in reporte.get("indicadores", []) if isinstance(i, dict)}
+    for nombre in PESOS_CAMILA:
+        item = recibidos.get(nombre, {})
+        try:
+            nivel = int(item.get("nivel", 0))
+        except (TypeError, ValueError):
+            nivel = 0
+        indicadores_validos.append({
+            "nombre": nombre,
+            "nivel": max(0, min(4, nivel)),
+            "evidencia": str(item.get("evidencia", "No se identificó evidencia textual suficiente.")),
+            "justificacion": str(item.get("justificacion", "No se proporcionó una justificación.")),
+        })
+    reporte["indicadores"] = indicadores_validos
+    for campo in ["fortalezas", "oportunidades_mejora", "recomendaciones", "evolucion_interaccion", "limitaciones"]:
+        valor = reporte.get(campo, [])
+        if not isinstance(valor, list):
+            valor = [str(valor)] if valor else []
+        reporte[campo] = [str(x) for x in valor]
+    reporte["porcentaje_efectividad"] = calcular_efectividad_camila(indicadores_validos)
+    return reporte
+
+def mostrar_reporte_camila(reporte):
+    """Presenta la rúbrica analítica de Camila en Streamlit."""
+    st.metric("Efectividad global", f"{reporte.get('porcentaje_efectividad', 0):.1f}%")
+    st.caption("Puntaje calculado en Python a partir de cinco indicadores ponderados; cada indicador se califica de 0 a 4.")
+    filas = []
+    for item in reporte.get("indicadores", []):
+        filas.append({
+            "Indicador": item["nombre"],
+            "Nivel (0-4)": item["nivel"],
+            "Peso (%)": PESOS_CAMILA[item["nombre"]],
+            "Evidencia textual": item["evidencia"],
+        })
+    st.dataframe(pd.DataFrame(filas), use_container_width=True, hide_index=True)
+    for item in reporte.get("indicadores", []):
+        with st.expander(f"{item['nombre']} — Nivel {item['nivel']}/4"):
+            st.markdown(f"**Evidencia:** {item['evidencia']}")
+            st.markdown(f"**Justificación:** {item['justificacion']}")
+    for titulo, campo in [
+        ("Fortalezas", "fortalezas"),
+        ("Oportunidades de mejora", "oportunidades_mejora"),
+        ("Recomendaciones", "recomendaciones"),
+        ("Evolución de la interacción", "evolucion_interaccion"),
+        ("Limitaciones de la evaluación", "limitaciones"),
+    ]:
+        st.markdown(f"#### {titulo}")
+        elementos = reporte.get(campo, [])
+        if elementos:
+            for elemento in elementos:
+                st.markdown(f"- {elemento}")
+        else:
+            st.write("No se registraron elementos en esta sección.")
+
 
 st.set_page_config(page_title="Simulador de Habilidades Blandas", page_icon="🎙️", layout="centered")
 
@@ -147,30 +231,54 @@ else:
                 * 🚫 **Evita la Indiferencia:** No minimices su problema diciendo cosas como *"no es para tanto"*.
                 * 🛠️ **Co-diseña una Solución:** Pregúntale cómo se sentiría más cómoda participando.
                 """,
-                "prompt_sistema": """Ponte en el rol de una persona de sexo mujer, llamada Camila, que es una estudiante universitaria que se encuentra triste y fastidiada pues sus compañeros de grupo están ignorando sus comentarios ya que consideran que "es muy lenta", "no entiende las explicaciones del profesor", "sus aportes son pobres". No has participado mucho de las actividades pues realmente no comprendes mucho del tema, pero has dedicado esfuerzos reales para entender y hacer la tarea asignada, aunque un tanto deficiente.
+                "prompt_sistema": """Interpreta a Camila, una estudiante universitaria que se siente triste, frustrada y poco valorada porque sus compañeros ignoran sus comentarios, la llaman "lenta" y consideran pobres sus aportes. Es cierto que le cuesta comprender algunos contenidos y ha participado poco, pero está haciendo un esfuerzo genuino por aprender y cumplir su tarea.
 
-Yo soy un integrante del equipo que intentará expresarse de forma empática contigo.
+La persona usuaria es un integrante del equipo que intentará conversar contigo de manera empática. Mantente en el personaje y responde de forma natural, breve y progresiva.
 
-DINÁMICA DE DIÁLOGO:
-- Iniciarás el diálogo molesta, con un tono que refleje esa tristeza y fastidio.
-- Mis respuestas no te deben resultar tan convincentes en las primeras interacciones, si luego de 3 a 5 diálogos se propongo algunos recursos empáticos, puedes mostrar flexibilidad para las soluciones. Si mis diálogos no resultan expresar empatía debes mantener la tristeza y fastidio.
-- BAJO NINGUNA CIRCUNSTANCIA UTILICES PROFANIDADES O PALABRAS SOECES.""",
-                "prompt_evaluacion": """Te vas a convertir en un auditor académico implacable y objetivo. Tu única función es auditar los errores del alumno basándote en la conversación. No justifiques sus buenas intenciones.
+DINÁMICA DE LA CONVERSACIÓN:
+- Comienza expresando tristeza, frustración y cierta desconfianza. No reveles toda la historia de golpe.
+- Comparte detalles adicionales gradualmente cuando la persona haga preguntas pertinentes y demuestre que escucha.
+- No te tranquilices automáticamente por frases genéricas como "te entiendo" o "no te preocupes". Observa si la respuesta reconoce concretamente lo que sientes.
+- Si minimizan tu experiencia, te culpan, justifican al equipo o saltan directamente a dar soluciones, mantén la reserva y explica por qué no te ayuda.
+- Si la persona parafrasea correctamente, pregunta con interés, valida tus emociones sin juzgar y reconoce tu esfuerzo específico, muestra gradualmente mayor confianza.
+- Cuando exista suficiente comprensión, participa en la construcción conjunta de alternativas realistas para que puedas aportar y aprender. No aceptes cualquier propuesta sin valorar si responde a tus necesidades.
+- No evalúes ni califiques a la persona durante la simulación.
+- No atribuyas tono de voz, gestos ni conductas que no puedas observar en el texto.
+- Nunca utilices profanidades ni palabras soeces.""",
+                "prompt_evaluacion": """Eres un evaluador académico especializado en empatía y comunicación interpersonal. Evalúa únicamente las intervenciones TEXTUALES de la persona estudiante en la transcripción. No evalúes la calidad de las respuestas de Camila como si fueran acciones del estudiante.
 
-PUNTUACIÓN BASE: Comienzas con 100%.
+CRITERIOS OBLIGATORIOS:
+- Usa exclusivamente evidencia textual presente en la conversación. No inventes citas.
+- No infieras tono de voz, volumen, pausas, lenguaje corporal, interrupciones reales ni intención no expresada. La transcripción proviene de reconocimiento automático de voz y puede contener errores.
+- Distingue una frase empática concreta de una frase genérica. "Te entiendo" por sí sola no demuestra validación profunda.
+- No penalices automáticamente ofrecer soluciones: evalúa si antes hubo reconocimiento, escucha e indagación suficientes.
+- Si no hay evidencia, asigna nivel 0 o 1 según corresponda y explica la limitación.
+- Asigna un nivel entero de 0 a 4 para cada indicador. No calcules ni inventes el porcentaje global: Python lo calculará usando los pesos establecidos.
 
-APLICA ESTE CHECKLIST DE PENALIZACIONES DE FORMA IMPLACABLE:
-1. ¿El alumno dio soluciones apresuradas sin antes profundizar en la frustración de Camila?
-2. ¿El alumno minimizó el problema de Camila, usó frases de indiferencia (ej: "no te preocupes", "es normal en grupos", "no es para tanto") o justificó el aislamiento de sus compañeros?
-3. ¿El alumno mostró un tono frío y distante que no validó la tristeza o fastidio del personaje?
-4. ¿El alumno mostró menos de 2 recursos empáticos (ej: indagar en el malestar de camila, tono comprensivo, preguntar cómo se siente camila, validar alguna expresión de camila) durante el diálogo?
-5. ¿El alumno desvía la conversación a temas ajenos a la situación que vive camila?
+RÚBRICA ANALÍTICA (niveles: 0 = No evidenciado; 1 = Inicial; 2 = En desarrollo; 3 = Logrado; 4 = Destacado):
+1. Reconocimiento emocional (20%): identifica emociones y situación concreta de Camila. 0: no reconoce; 1: reconocimiento vago o incorrecto; 2: identifica una emoción/situación de forma general; 3: reconoce emociones y causas con precisión; 4: reconoce matices emocionales y los refleja con sensibilidad.
+2. Escucha activa e indagación (25%): hace preguntas abiertas, pertinentes y de seguimiento; retoma lo expresado por Camila. 0: no indaga ni retoma; 1: preguntas cerradas/superficiales; 2: alguna pregunta pertinente sin profundizar; 3: indaga y retoma información relevante; 4: indagación progresiva, coherente y profunda que facilita ampliar la perspectiva.
+3. Validación emocional (30%): legitima la experiencia emocional sin minimizar, juzgar ni justificar el trato recibido. 0: invalida o no valida; 1: usa fórmulas genéricas o ambiguas; 2: valida parcialmente; 3: valida explícitamente emociones y esfuerzo; 4: valida de manera específica, respetuosa y consistente, sin apresurar soluciones.
+4. Comprensión de perspectivas (15%): demuestra que comprende la experiencia, necesidades y barreras de Camila sin asumir ni culpabilizar. 0: distorsiona o ignora su perspectiva; 1: comprensión superficial; 2: reconoce algunos factores; 3: integra emociones, dificultades y esfuerzo; 4: refleja con precisión la complejidad de su perspectiva y comprueba su comprensión.
+5. Construcción conjunta de soluciones (10%): explora alternativas con Camila y considera sus necesidades. 0: no propone ni construye alternativas; 1: impone una solución apresurada; 2: propone una alternativa parcialmente pertinente; 3: consulta preferencias y acuerda pasos viables; 4: co-diseña alternativas específicas, realistas y acordadas.
 
-REPORTE A DEVOLVER (ESTRICTO):
-- **Aspectos Positivos:** (Detalla al menos 3 aspectos favorables, si la conversación fue deficiente detalla menos, usa citas textuales)
-- **Aspectos de Mejora:** (Detalla con citas textuales de la conversación cada uno de los puntos del checklist donde el alumno falló)
-- **Recomendaciones:** (Cómo debió haber respondido para no cometer esos errores)
-- **Porcentaje de Efectividad:** (Si presenta más aspectos positivos que negativos durante la conversación, el porcentaje no debe ser menor a 50%, si son más aspectos negativos, el porcentaje debe ser menor de 50%) [Muestra ÚNICAMENTE el número final seguido del símbolo '%' sin desgloses matemáticos, sin operaciones y sin texto entre paréntesis. Ejemplo: 45%]"""
+DEVUELVE ÚNICAMENTE UN JSON VÁLIDO con esta estructura exacta:
+{
+  "indicadores": [
+    {"nombre": "Reconocimiento emocional", "nivel": 0, "evidencia": "cita textual breve o ausencia de evidencia", "justificacion": "explicación basada en la rúbrica"},
+    {"nombre": "Escucha activa e indagación", "nivel": 0, "evidencia": "...", "justificacion": "..."},
+    {"nombre": "Validación emocional", "nivel": 0, "evidencia": "...", "justificacion": "..."},
+    {"nombre": "Comprensión de perspectivas", "nivel": 0, "evidencia": "...", "justificacion": "..."},
+    {"nombre": "Construcción conjunta de soluciones", "nivel": 0, "evidencia": "...", "justificacion": "..."}
+  ],
+  "fortalezas": ["..."],
+  "oportunidades_mejora": ["..."],
+  "recomendaciones": ["..."],
+  "evolucion_interaccion": ["Describe cómo cambió la disposición de Camila, solo a partir del diálogo textual"],
+  "limitaciones": ["Indica que solo se evaluó la transcripción textual y que el reconocimiento automático puede contener errores"]
+}
+
+Incluye citas textuales cortas y exactas cuando existan. Si la conversación es demasiado breve, indícalo y evita conclusiones fuertes. No agregues campos ni markdown fuera del JSON."""
             },
             
             "Caso 2: Renato (Resolución de Conflictos)": {
@@ -221,6 +329,7 @@ REPORTE A DEVOLVER (ESTRICTO):
             st.session_state.conversacion_texto = ""
             st.session_state.reporte_final = ""
             st.session_state.simulacion_activa = False
+            st.session_state.ruta_audio_salida = None
 
         st.markdown("---")
         st.subheader(datos_caso["titulo_interfaz"])
@@ -265,9 +374,12 @@ REPORTE A DEVOLVER (ESTRICTO):
                 if st.button("🚀 Iniciar Simulación", use_container_width=True, disabled=st.session_state.simulacion_activa or not nombre_estudiante.strip()):
                     st.session_state.simulacion_activa = True
                     with st.spinner(f"Iniciando caso con {datos_caso['nombre_personaje']}..."):
+                        # Insertar el nombre antes de iniciar el diálogo (evita la condición de longitud incorrecta).
+                        st.session_state.historial.insert(
+                            1,
+                            {"role": "system", "content": f"El nombre de la persona que interactúa contigo es {nombre_estudiante}. Dirígete a ella por su nombre solo cuando resulte natural."}
+                        )
                         st.session_state.historial.append({"role": "user", "content": "COMIENZA EL EJERCICIO"})
-                        if len(st.session_state.historial) == 3:
-                            st.session_state.historial.insert(1, {"role": "system", "content": f"Nota de contexto: El usuario con el que hablas es un alumno llamado {nombre_estudiante}."})
                         
                         response = client.chat.completions.create(model="gpt-4o-mini", messages=st.session_state.historial)
                         respuesta_personaje = response.choices[0].message.content
@@ -277,7 +389,9 @@ REPORTE A DEVOLVER (ESTRICTO):
                         audio_response = client.audio.speech.create(
                             model="tts-1", voice=datos_caso["voice_config"], input=respuesta_personaje, response_format="aac", speed=1.12
                         )
-                        audio_response.write_to_file("simulador_voz.aac")
+                        ruta_audio_salida = os.path.join(tempfile.gettempdir(), f"simulador_{uuid.uuid4().hex}.aac")
+                        audio_response.write_to_file(ruta_audio_salida)
+                        st.session_state.ruta_audio_salida = ruta_audio_salida
                         st.session_state.reproducir_inicial = True
                     st.rerun()
 
@@ -287,18 +401,39 @@ REPORTE A DEVOLVER (ESTRICTO):
                         intervenciones_usuario = [m for m in st.session_state.historial if m["role"] == "user" and m["content"] != "COMIENZA EL EJERCICIO"]
                         palabras_totales = " ".join([m["content"] for m in intervenciones_usuario])
                         
+                        es_caso_camila = caso_seleccionado.startswith("Caso 1: Camila")
                         if len(palabras_totales.strip()) < 5:
-                            st.session_state.reporte_final = """- **Aspectos Positivos:** Ninguno. No existió interacción real con el personaje.
+                            if es_caso_camila:
+                                st.session_state.reporte_final = normalizar_reporte_camila({
+                                    "indicadores": [],
+                                    "fortalezas": [],
+                                    "oportunidades_mejora": ["No se registró una interacción suficiente para demostrar las habilidades evaluadas."],
+                                    "recomendaciones": ["Realiza una conversación con Camila y responde a sus intervenciones antes de finalizar."],
+                                    "evolucion_interaccion": ["No fue posible observar una evolución por ausencia de diálogo."],
+                                    "limitaciones": ["No hubo evidencia textual suficiente para evaluar la competencia."]
+                                })
+                            else:
+                                st.session_state.reporte_final = """- **Aspectos Positivos:** Ninguno. No existió interacción real con el personaje.
 - **Aspectos de Mejora:** Abandono o evasión del ejercicio práctico.
 - **Recomendaciones:** Debió entablar un diálogo activo con el personaje para poner a prueba sus habilidades antes de finalizar la sesión.
 - **Porcentaje de Efectividad:** 0%"""
                         else:
                             mensajes_evaluacion = [
                                 {"role": "system", "content": datos_caso["prompt_evaluacion"]},
-                                {"role": "user", "content": f"Aquí está el historial completo de la simulación para que lo evalúes:\n\n{st.session_state.conversacion_texto}"}
+                                {"role": "user", "content": f"Evalúa esta transcripción de la simulación.\n\n{st.session_state.conversacion_texto}"}
                             ]
-                            response_eval = client.chat.completions.create(model="gpt-4o-mini", messages=mensajes_evaluacion)
-                            st.session_state.reporte_final = response_eval.choices[0].message.content
+                            if es_caso_camila:
+                                response_eval = client.chat.completions.create(
+                                    model="gpt-4o-mini",
+                                    messages=mensajes_evaluacion,
+                                    response_format={"type": "json_object"},
+                                    temperature=0.1
+                                )
+                                reporte_json = json.loads(response_eval.choices[0].message.content)
+                                st.session_state.reporte_final = normalizar_reporte_camila(reporte_json)
+                            else:
+                                response_eval = client.chat.completions.create(model="gpt-4o-mini", messages=mensajes_evaluacion)
+                                st.session_state.reporte_final = response_eval.choices[0].message.content
                         
                         st.session_state.fase = "evaluacion"
                     st.rerun()
@@ -307,7 +442,7 @@ REPORTE A DEVOLVER (ESTRICTO):
 
             if getattr(st.session_state, 'reproducir_inicial', False):
                 st.markdown(f"### 🗣️ {datos_caso['nombre_personaje']} dice:")
-                st.audio("simulador_voz.aac", format="audio/aac", autoplay=True)
+                st.audio(st.session_state.ruta_audio_salida, format="audio/aac", autoplay=True)
                 st.session_state.reproducir_inicial = False
 
             if st.session_state.simulacion_activa:
@@ -319,9 +454,18 @@ REPORTE A DEVOLVER (ESTRICTO):
                     try:
                         with estado.container():
                             st.write("⚡ *Procesando audio...*")
-                            with open("alumno_audio.wav", "wb") as f: f.write(audio_grabado["bytes"])
-                            with open("alumno_audio.wav", "rb") as audio_file:
-                                transcripcion = client.audio.transcriptions.create(model="whisper-1", file=audio_file)
+                            archivo_audio = tempfile.NamedTemporaryFile(delete=False, suffix=".wav")
+                            ruta_audio = archivo_audio.name
+                            try:
+                                archivo_audio.write(audio_grabado["bytes"])
+                                archivo_audio.close()
+                                with open(ruta_audio, "rb") as audio_file:
+                                    transcripcion = client.audio.transcriptions.create(model="whisper-1", file=audio_file)
+                            finally:
+                                try:
+                                    os.remove(ruta_audio)
+                                except OSError:
+                                    pass
                         
                         texto_alumno = transcripcion.text
                         st.session_state.conversacion_texto += f"Tú: {texto_alumno}\n\n"
@@ -336,11 +480,13 @@ REPORTE A DEVOLVER (ESTRICTO):
                             audio_response = client.audio.speech.create(
                                 model="tts-1", voice=datos_caso["voice_config"], input=respuesta_personaje, response_format="aac", speed=1.12
                             )
-                            audio_response.write_to_file("simulador_voz.aac")
+                            ruta_audio_salida = os.path.join(tempfile.gettempdir(), f"simulador_{uuid.uuid4().hex}.aac")
+                            audio_response.write_to_file(ruta_audio_salida)
+                            st.session_state.ruta_audio_salida = ruta_audio_salida
                         
                         estado.empty()
                         st.markdown(f"### 🗣️ {datos_caso['nombre_personaje']} dice:")
-                        st.audio("simulador_voz.aac", format="audio/aac", autoplay=True)
+                        st.audio(st.session_state.ruta_audio_salida, format="audio/aac", autoplay=True)
                     except Exception as e:
                         st.error(f"Hubo un problema con la API: {e}")
             else:
@@ -353,7 +499,10 @@ REPORTE A DEVOLVER (ESTRICTO):
         elif st.session_state.fase == "evaluacion":
             st.success("🏁 ¡Simulación Finalizada!")
             st.markdown("## 📊 Reporte de Evaluación")
-            st.write(st.session_state.reporte_final)
+            if isinstance(st.session_state.reporte_final, dict):
+                mostrar_reporte_camila(st.session_state.reporte_final)
+            else:
+                st.markdown(st.session_state.reporte_final)
             
             st.markdown("---")
             st.markdown("#### 🚀 Registro Centralizado:")
@@ -368,20 +517,26 @@ REPORTE A DEVOLVER (ESTRICTO):
                         df_existente = conn.read(spreadsheet=URL_HOJA, worksheet="Hoja 1", usecols=[0, 1, 2, 3, 4, 5, 6, 7], ttl=0).dropna(how="all")
                         fecha_actual = datetime.now(ZoneInfo("America/Lima")).strftime("%Y-%m-%d %H:%M:%S")
                         
-                        with st.spinner("Extrayendo porcentaje de efectividad..."):
+                        # Camila ya tiene un puntaje calculado en Python. Renato conserva su extracción previa.
+                        if isinstance(st.session_state.reporte_final, dict):
+                            solo_porcentaje = f"{st.session_state.reporte_final.get('porcentaje_efectividad', 0):.2f}%"
+                            reporte_para_guardar = json.dumps(st.session_state.reporte_final, ensure_ascii=False)
+                        else:
                             proceso_nota = client.chat.completions.create(
                                 model="gpt-4o-mini",
                                 messages=[
-                                    {"role": "system", "content": "Extrae exclusivamente el porcentaje numérico de efectividad final. Tu respuesta debe consistir ÚNICAMENTE en el número seguido del símbolo '%' (ejemplo: '45%' o '0%'). No incluyas texto adicional ni paréntesis."},
-                                    {"role": "user", "content": st.session_state.reporte_final}
-                                ]
+                                    {"role": "system", "content": "Extrae exclusivamente el porcentaje numérico de efectividad final. Responde solo con el número seguido de %."},
+                                    {"role": "user", "content": str(st.session_state.reporte_final)}
+                                ],
+                                temperature=0
                             )
                             solo_porcentaje = proceso_nota.choices[0].message.content.strip()
+                            reporte_para_guardar = str(st.session_state.reporte_final)
                         
                         nueva_fila = pd.DataFrame([{
                             "Fecha": fecha_actual, "Estudiante": nombre_estudiante if nombre_estudiante else "Anónimo",
                             "Docente": docente_seleccionado, "Curso": curso_seleccionado, "Caso_Evaluado": caso_seleccionado,
-                            "Historial_Completo": st.session_state.conversacion_texto, "Reporte_Evaluacion": st.session_state.reporte_final,
+                            "Historial_Completo": st.session_state.conversacion_texto, "Reporte_Evaluacion": reporte_para_guardar,
                             "Porcentaje_Efectividad": solo_porcentaje
                         }])
                         
