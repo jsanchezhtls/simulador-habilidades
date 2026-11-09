@@ -67,7 +67,11 @@ def normalizar_reporte_camila(reporte):
 def mostrar_reporte_camila(reporte):
     """Presenta la rúbrica analítica de Camila en Streamlit."""
     st.metric("Efectividad global", f"{reporte.get('porcentaje_efectividad', 0):.1f}%")
-    st.caption("Puntaje calculado en Python a partir de cinco indicadores ponderados; cada indicador se califica de 0 a 4.")
+    if str(st.session_state.usuario_actual.get("Rol", "")).strip().lower() == "docente":
+    st.caption(
+        "Puntaje calculado en Python a partir de cinco indicadores ponderados; "
+        "cada indicador se califica de 0 a 4."
+    )
     filas = []
     for item in reporte.get("indicadores", []):
         filas.append({
