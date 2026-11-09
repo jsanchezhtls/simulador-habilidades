@@ -170,7 +170,7 @@ REPORTE A DEVOLVER (ESTRICTO):
 - **Aspectos Positivos:** (Detalla al menos 3 aspectos favorables, si la conversación fue deficiente detalla menos, usa citas textuales)
 - **Aspectos de Mejora:** (Detalla con citas textuales de la conversación cada uno de los puntos del checklist donde el alumno falló)
 - **Recomendaciones:** (Cómo debió haber respondido para no cometer esos errores)
-- **Porcentaje de Efectividad:** [Muestra ÚNICAMENTE el número final seguido del símbolo '%' sin desgloses matemáticos, sin operaciones y sin texto entre paréntesis. Ejemplo: 45%]"""
+- **Porcentaje de Efectividad:** (Si presenta más aspectos positivos que negativos durante la conversación, el porcentaje no debe ser menor a 50%, si son más aspectos negativos, el porcentaje debe ser menor de 50%) [Muestra ÚNICAMENTE el número final seguido del símbolo '%' sin desgloses matemáticos, sin operaciones y sin texto entre paréntesis. Ejemplo: 45%]"""
             },
             
             "Caso 2: Renato (Resolución de Conflictos)": {
