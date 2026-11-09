@@ -113,6 +113,27 @@ def mostrar_reporte_camila(reporte):
             st.write("No se registraron elementos en esta sección.")
 
 
+def mostrar_reporte_historial(reporte):
+    """Muestra reportes de Camila estructurados y conserva Renato en texto."""
+
+    if isinstance(reporte, dict):
+        datos = reporte
+    else:
+        texto = str(reporte).strip()
+        try:
+            datos = json.loads(texto)
+        except (json.JSONDecodeError, TypeError, ValueError):
+            st.markdown(texto if texto else "Sin reporte registrado.")
+            return
+
+    # Los reportes de Camila contienen la clave "indicadores".
+    if isinstance(datos, dict) and isinstance(datos.get("indicadores"), list):
+        mostrar_reporte_camila(datos)
+    else:
+        # Renato y los reportes antiguos en texto mantienen su presentación original.
+        st.markdown(str(reporte))
+
+
 st.set_page_config(page_title="Simulador de Habilidades Blandas", page_icon="🎙️", layout="centered")
 
 # --- OCULTAR ELEMENTOS DERECHOS ---
@@ -629,7 +650,12 @@ REPORTE A DEVOLVER (ESTRICTO):
                         fecha_str = row["Fecha"].strftime("%Y-%m-%d %H:%M") if pd.notnull(row["Fecha"]) else "Sin fecha"
                         with st.expander(f"Caso: {row['Caso_Evaluado']} | Nota: {row['Efectividad_Num']:.1f}% ({fecha_str})"):
                             st.markdown(f"**Docente:** {row['Docente']}")
-                            st.markdown(f"**Reporte:**\n{row['Reporte_Evaluacion']}")
+                            st.markdown("#### 📝 Reporte evaluativo")
+                            reporte_guardado = row.get(
+                                "Reporte_Evaluacion",
+                                "Sin reporte registrado."
+                            )
+                            mostrar_reporte_historial(reporte_guardado)
 
             # ------------------------------------------
             # VISTA PARA DOCENTES
@@ -677,7 +703,11 @@ REPORTE A DEVOLVER (ESTRICTO):
                             
                             with col_reporte:
                                 st.markdown("#### 📝 Reporte Evaluativo Recibido:")
-                                st.markdown(row.get("Reporte_Evaluacion", "Sin reporte registrado."))
+                                reporte_guardado = row.get(
+                                    "Reporte_Evaluacion",
+                                    "Sin reporte registrado."
+                                )
+                                mostrar_reporte_historial(reporte_guardado)
                                 
                             with col_transcripcion:
                                 st.markdown("#### 💬 Transcripción de la Conversación:")
