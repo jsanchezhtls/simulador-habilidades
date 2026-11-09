@@ -160,11 +160,11 @@ DINÁMICA DE DIÁLOGO:
 PUNTUACIÓN BASE: Comienzas con 100%.
 
 APLICA ESTE CHECKLIST DE PENALIZACIONES DE FORMA IMPLACABLE:
-1. ¿El alumno dio soluciones apresuradas sin antes profundizar en la frustración de Camila? -> Resta 15%.
-2. ¿El alumno minimizó el problema de Camila, usó frases de indiferencia (ej: "no te preocupes", "es normal en grupos", "no es para tanto") o justificó el aislamiento de sus compañeros? -> Resta 20%.
-3. ¿El alumno mostró un tono frío y distante que no validó la tristeza o fastidio del personaje? -> Resta 20%.
-4. ¿El alumno mostró menos de 2 recursos empáticos durante el diálogo? -> 20%
-5. ¿El alumno desvía la conversación a temas ajenos a la situación que vive camila? -> 25%
+1. ¿El alumno dio soluciones apresuradas sin antes profundizar en la frustración de Camila?
+2. ¿El alumno minimizó el problema de Camila, usó frases de indiferencia (ej: "no te preocupes", "es normal en grupos", "no es para tanto") o justificó el aislamiento de sus compañeros?
+3. ¿El alumno mostró un tono frío y distante que no validó la tristeza o fastidio del personaje?
+4. ¿El alumno mostró menos de 2 recursos empáticos (ej: indagar en el malestar de camila, tono comprensivo, preguntar cómo se siente camila, validar alguna expresión de camila) durante el diálogo?
+5. ¿El alumno desvía la conversación a temas ajenos a la situación que vive camila?
 
 REPORTE A DEVOLVER (ESTRICTO):
 - **Aspectos Positivos:** (Detalla al menos 3 aspectos favorables, si la conversación fue deficiente detalla menos, usa citas textuales)
