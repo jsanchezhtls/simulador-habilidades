@@ -546,7 +546,7 @@ REPORTE A DEVOLVER (ESTRICTO):
             
             with st.form(key="formulario_guardado"):
                 st.write(f"Presiona el botón de abajo para consolidar la participación de **{nombre_estudiante}**:")
-                boton_guardar = st.form_submit_button("📊 Enviar conversación a Google Sheets central", use_container_width=True)
+                boton_guardar = st.form_submit_button("📊 Enviar y guardar", use_container_width=True)
                 
                 if boton_guardar:
                     try:
