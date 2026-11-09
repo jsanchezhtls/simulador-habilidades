@@ -2301,8 +2301,12 @@ else:
 
                     else:
 
-                        estudiantes_lista = list(
-                            df_docente["Estudiante"].unique()
+                        estudiantes_lista = sorted(
+                            df_docente["Estudiante"]
+                            .dropna()
+                            .astype(str)
+                            .unique()
+                            .tolist()
                         )
 
                         st.subheader(
@@ -2315,131 +2319,408 @@ else:
                             f"{len(estudiantes_lista)} estudiantes asignados."
                         )
 
+                        # ----------------------------------
+                        # 1. SELECCIÓN DEL ESTUDIANTE
+                        # ----------------------------------
+
                         estudiante_sel = st.selectbox(
                             "Selecciona un estudiante para revisar su perfil:",
-                            estudiantes_lista
+                            estudiantes_lista,
+                            key="docente_estudiante_sel"
                         )
 
-                        df_estudiante_sel = df_docente[
+                        df_estudiante_completo = df_docente[
                             df_docente["Estudiante"]
+                            .astype(str)
                             == estudiante_sel
-                        ].sort_values("Fecha")
+                        ].copy()
 
-                        c1, c2 = st.columns(2)
-
-                        c1.metric(
-                            "Promedio del Estudiante",
-                            f"{df_estudiante_sel['Efectividad_Num'].mean():.1f}%"
+                        df_estudiante_completo = (
+                            df_estudiante_completo
+                            .sort_values("Fecha")
                         )
 
-                        c2.metric(
-                            "Intentos Totales",
-                            len(df_estudiante_sel)
+                        # ----------------------------------
+                        # 2. FILTRO POR CASO
+                        # ----------------------------------
+
+                        st.markdown("---")
+                        st.subheader("🔎 Filtrar resultados por caso")
+
+                        casos_disponibles_docente = sorted(
+                            df_estudiante_completo["Caso_Evaluado"]
+                            .dropna()
+                            .astype(str)
+                            .unique()
+                            .tolist()
                         )
 
-                        st.subheader(
-                            f"📈 Evolución de {estudiante_sel}"
+                        opciones_casos_docente = [
+                            "Todos los casos"
+                        ] + casos_disponibles_docente
+
+                        caso_filtro_docente = st.selectbox(
+                            "Selecciona el caso que deseas analizar:",
+                            opciones_casos_docente,
+                            key="filtro_caso_docente"
                         )
 
-                        chart_docente = (
-                            alt.Chart(df_estudiante_sel)
-                            .mark_line(point=True)
-                            .encode(
-                                x=alt.X(
-                                    "Fecha:T",
-                                    title="Fecha y Hora"
-                                ),
-                                y=alt.Y(
-                                    "Efectividad_Num:Q",
-                                    title="Porcentaje (%)",
-                                    scale=alt.Scale(
-                                        domain=[0, 100]
+                        # ----------------------------------
+                        # 3. APLICAR FILTRO
+                        # ----------------------------------
+
+                        if caso_filtro_docente == "Todos los casos":
+
+                            df_estudiante_sel = (
+                                df_estudiante_completo.copy()
+                            )
+
+                        else:
+
+                            df_estudiante_sel = (
+                                df_estudiante_completo[
+                                    df_estudiante_completo[
+                                        "Caso_Evaluado"
+                                    ].astype(str)
+                                    == caso_filtro_docente
+                                ].copy()
+                            )
+
+                        df_estudiante_sel = (
+                            df_estudiante_sel
+                            .sort_values("Fecha")
+                            .reset_index(drop=True)
+                        )
+
+                        if df_estudiante_sel.empty:
+
+                            st.info(
+                                "El estudiante no tiene registros "
+                                "para el caso seleccionado."
+                            )
+
+                        else:
+
+                            # ----------------------------------
+                            # 4. MÉTRICAS DEL ESTUDIANTE
+                            # ----------------------------------
+
+                            promedio_estudiante = (
+                                df_estudiante_sel[
+                                    "Efectividad_Num"
+                                ].mean()
+                            )
+
+                            total_intentos = len(
+                                df_estudiante_sel
+                            )
+
+                            mejor_resultado = (
+                                df_estudiante_sel[
+                                    "Efectividad_Num"
+                                ].max()
+                            )
+
+                            c1, c2, c3 = st.columns(3)
+
+                            c1.metric(
+                                "Promedio de Efectividad",
+                                f"{promedio_estudiante:.1f}%"
+                            )
+
+                            c2.metric(
+                                "Intentos Realizados",
+                                total_intentos
+                            )
+
+                            c3.metric(
+                                "Mejor Resultado",
+                                f"{mejor_resultado:.1f}%"
+                            )
+
+                            # ----------------------------------
+                            # 5. CURVA DE EVOLUCIÓN
+                            # ----------------------------------
+
+                            st.markdown("---")
+
+                            titulo_grafico = (
+                                "Evolución general"
+                                if caso_filtro_docente == "Todos los casos"
+                                else f"Evolución en {caso_filtro_docente}"
+                            )
+
+                            st.subheader(
+                                f"📈 {titulo_grafico}: {estudiante_sel}"
+                            )
+
+                            st.caption(
+                                "La gráfica muestra la evolución de la "
+                                "efectividad en las simulaciones registradas."
+                            )
+
+                            df_grafico_docente = (
+                                df_estudiante_sel.copy()
+                            )
+
+                            df_grafico_docente["Intento"] = range(
+                                1,
+                                len(df_grafico_docente) + 1
+                            )
+
+                            df_grafico_docente["Fecha_Texto"] = (
+                                df_grafico_docente["Fecha"]
+                                .dt.strftime("%d/%m/%Y %H:%M")
+                                .fillna("Sin fecha")
+                            )
+
+                            if caso_filtro_docente == "Todos los casos":
+
+                                chart_docente = (
+                                    alt.Chart(df_grafico_docente)
+                                    .mark_line(
+                                        point=True,
+                                        strokeWidth=3
                                     )
-                                ),
-                                tooltip=[
-                                    "Fecha",
-                                    "Caso_Evaluado",
+                                    .encode(
+                                        x=alt.X(
+                                            "Intento:Q",
+                                            title="Número de intento",
+                                            axis=alt.Axis(
+                                                tickMinStep=1
+                                            )
+                                        ),
+                                        y=alt.Y(
+                                            "Efectividad_Num:Q",
+                                            title="Efectividad (%)",
+                                            scale=alt.Scale(
+                                                domain=[0, 100]
+                                            )
+                                        ),
+                                        color=alt.Color(
+                                            "Caso_Evaluado:N",
+                                            title="Caso evaluado"
+                                        ),
+                                        tooltip=[
+                                            alt.Tooltip(
+                                                "Intento:Q",
+                                                title="Intento"
+                                            ),
+                                            alt.Tooltip(
+                                                "Fecha_Texto:N",
+                                                title="Fecha"
+                                            ),
+                                            alt.Tooltip(
+                                                "Caso_Evaluado:N",
+                                                title="Caso"
+                                            ),
+                                            alt.Tooltip(
+                                                "Efectividad_Num:Q",
+                                                title="Efectividad",
+                                                format=".1f"
+                                            )
+                                        ]
+                                    )
+                                    .properties(height=350)
+                                    .interactive()
+                                )
+
+                            else:
+
+                                chart_docente = (
+                                    alt.Chart(df_grafico_docente)
+                                    .mark_line(
+                                        point=True,
+                                        strokeWidth=3
+                                    )
+                                    .encode(
+                                        x=alt.X(
+                                            "Intento:Q",
+                                            title="Número de intento",
+                                            axis=alt.Axis(
+                                                tickMinStep=1
+                                            )
+                                        ),
+                                        y=alt.Y(
+                                            "Efectividad_Num:Q",
+                                            title="Efectividad (%)",
+                                            scale=alt.Scale(
+                                                domain=[0, 100]
+                                            )
+                                        ),
+                                        tooltip=[
+                                            alt.Tooltip(
+                                                "Intento:Q",
+                                                title="Intento"
+                                            ),
+                                            alt.Tooltip(
+                                                "Fecha_Texto:N",
+                                                title="Fecha"
+                                            ),
+                                            alt.Tooltip(
+                                                "Efectividad_Num:Q",
+                                                title="Efectividad",
+                                                format=".1f"
+                                            )
+                                        ]
+                                    )
+                                    .properties(height=350)
+                                    .interactive()
+                                )
+
+                            st.altair_chart(
+                                chart_docente,
+                                use_container_width=True
+                            )
+
+                            # ----------------------------------
+                            # 6. COMPARACIÓN DE RESULTADOS
+                            # ----------------------------------
+
+                            st.markdown("---")
+
+                            st.subheader(
+                                "📊 Comparación del desempeño"
+                            )
+
+                            primer_resultado = float(
+                                df_estudiante_sel.iloc[0][
                                     "Efectividad_Num"
                                 ]
                             )
-                            .properties(height=300)
-                        )
 
-                        st.altair_chart(
-                            chart_docente,
-                            use_container_width=True
-                        )
+                            ultimo_resultado = float(
+                                df_estudiante_sel.iloc[-1][
+                                    "Efectividad_Num"
+                                ]
+                            )
 
-                        st.subheader(
-                            "📋 Detalle de Interacciones y Reportes Evaluativos"
-                        )
+                            diferencia = (
+                                ultimo_resultado - primer_resultado
+                            )
 
-                        for idx, row in df_estudiante_sel.iterrows():
+                            col_inicio, col_final = st.columns(2)
 
-                            fecha_str = (
-                                row["Fecha"].strftime(
-                                    "%Y-%m-%d %H:%M"
+                            col_inicio.metric(
+                                "Primer resultado",
+                                f"{primer_resultado:.1f}%"
+                            )
+
+                            col_final.metric(
+                                "Último resultado",
+                                f"{ultimo_resultado:.1f}%",
+                                delta=f"{diferencia:+.1f} puntos"
+                            )
+
+                            if diferencia > 0:
+
+                                st.success(
+                                    f"El estudiante mejoró "
+                                    f"{diferencia:.1f} puntos "
+                                    "porcentuales entre el primer "
+                                    "y el último intento."
                                 )
-                                if pd.notnull(row["Fecha"])
-                                else "Sin fecha"
+
+                            elif diferencia < 0:
+
+                                st.warning(
+                                    f"El último resultado disminuyó "
+                                    f"{abs(diferencia):.1f} puntos "
+                                    "porcentuales respecto al primero."
+                                )
+
+                            else:
+
+                                st.info(
+                                    "El primer y último resultado "
+                                    "son iguales."
+                                )
+
+                            # ----------------------------------
+                            # 7. REPORTES Y TRANSCRIPCIONES
+                            # ----------------------------------
+
+                            st.markdown("---")
+
+                            st.subheader(
+                                "📋 Detalle de interacciones "
+                                "y reportes evaluativos"
                             )
 
-                            nota_display = (
-                                f"{row['Efectividad_Num']:.1f}%"
+                            st.caption(
+                                "Los registros que aparecen a continuación "
+                                "respetan el filtro de caso seleccionado."
                             )
 
-                            with st.expander(
-                                f"📌 {fecha_str} | "
-                                f"Caso: {row['Caso_Evaluado']} | "
-                                f"Nota: {nota_display}"
+                            for idx, row in (
+                                df_estudiante_sel
+                                .iloc[::-1]
+                                .iterrows()
                             ):
 
-                                st.markdown(
-                                    f"**Curso:** "
-                                    f"{row.get('Curso', 'N/A')}"
+                                fecha_str = (
+                                    row["Fecha"].strftime(
+                                        "%Y-%m-%d %H:%M"
+                                    )
+                                    if pd.notnull(row["Fecha"])
+                                    else "Sin fecha"
                                 )
 
-                                st.markdown("---")
-
-                                col_reporte, col_transcripcion = (
-                                    st.columns(2)
+                                nota_display = (
+                                    f"{row['Efectividad_Num']:.1f}%"
                                 )
 
-                                with col_reporte:
+                                with st.expander(
+                                    f"📌 {fecha_str} | "
+                                    f"Caso: {row['Caso_Evaluado']} | "
+                                    f"Nota: {nota_display}"
+                                ):
 
                                     st.markdown(
-                                        "#### 📝 Reporte Evaluativo Recibido:"
+                                        f"**Curso:** "
+                                        f"{row.get('Curso', 'N/A')}"
                                     )
 
-                                    reporte_guardado = row.get(
-                                        "Reporte_Evaluacion",
-                                        "Sin reporte registrado."
+                                    st.markdown("---")
+
+                                    col_reporte, col_transcripcion = (
+                                        st.columns(2)
                                     )
 
-                                    mostrar_reporte_historial(
-                                        reporte_guardado
-                                    )
+                                    with col_reporte:
 
-                                with col_transcripcion:
-
-                                    st.markdown(
-                                        "#### 💬 Transcripción de la Conversación:"
-                                    )
-
-                                    historial_txt = str(
-                                        row.get(
-                                            "Historial_Completo",
-                                            "Sin transcripción disponible."
+                                        st.markdown(
+                                            "#### 📝 Reporte Evaluativo Recibido:"
                                         )
-                                    )
 
-                                    st.text_area(
-                                        label="Historial de audio/texto:",
-                                        value=historial_txt,
-                                        height=300,
-                                        key=f"historial_docente_{idx}"
-                                    )
+                                        reporte_guardado = row.get(
+                                            "Reporte_Evaluacion",
+                                            "Sin reporte registrado."
+                                        )
 
+                                        mostrar_reporte_historial(
+                                            reporte_guardado
+                                        )
+
+                                    with col_transcripcion:
+
+                                        st.markdown(
+                                            "#### 💬 Transcripción de la Conversación:"
+                                        )
+
+                                        historial_txt = str(
+                                            row.get(
+                                                "Historial_Completo",
+                                                "Sin transcripción disponible."
+                                            )
+                                        )
+
+                                        st.text_area(
+                                            label="Historial de audio/texto:",
+                                            value=historial_txt,
+                                            height=300,
+                                            key=f"historial_docente_{idx}"
+                                        )
         except Exception as e:
 
             st.error(
