@@ -1,4 +1,3 @@
-
 import streamlit as st
 
 # ==========================================
@@ -37,7 +36,7 @@ URL_HOJA = (
 # 2. RÚBRICA COMÚN DE EMPATÍA
 # ==========================================
 
-PESOS_CAMILA = {
+PESOS_EMPATIA = {
     "Reconocimiento emocional": 20,
     "Escucha activa e indagación": 25,
     "Validación emocional": 30,
@@ -46,30 +45,44 @@ PESOS_CAMILA = {
 }
 
 
-def calcular_efectividad_camila(indicadores):
-    """Calcula el puntaje ponderado a partir de niveles de 0 a 4."""
+def calcular_efectividad_empatia(indicadores):
+    """
+    Calcula el puntaje ponderado de empatía.
+    Cada indicador se califica de 0 a 4.
+    El resultado final se expresa de 0 a 100.
+    """
 
-    niveles_por_nombre = {
-        item.get("nombre"): item.get("nivel", 0)
-        for item in indicadores
-    }
+    if not isinstance(indicadores, list):
+        indicadores = []
+
+    niveles_por_nombre = {}
+
+    for item in indicadores:
+        if isinstance(item, dict):
+            nombre = item.get("nombre")
+            niveles_por_nombre[nombre] = item.get("nivel", 0)
 
     puntaje = 0.0
 
-    for nombre, peso in PESOS_CAMILA.items():
+    for nombre, peso in PESOS_EMPATIA.items():
+
         try:
             nivel = int(niveles_por_nombre.get(nombre, 0))
         except (TypeError, ValueError):
             nivel = 0
 
         nivel = max(0, min(4, nivel))
+
         puntaje += (nivel / 4) * peso
 
     return round(puntaje, 2)
 
 
-def normalizar_reporte_camila(reporte):
-    """Valida y completa el reporte común de los tres casos de empatía."""
+def normalizar_reporte_empatia(reporte):
+    """
+    Valida y completa el reporte común de los tres casos de empatía.
+    Garantiza que siempre existan los cinco indicadores.
+    """
 
     if not isinstance(reporte, dict):
         reporte = {}
@@ -87,17 +100,23 @@ def normalizar_reporte_camila(reporte):
 
     indicadores_validos = []
 
-    for nombre in PESOS_CAMILA:
+    for nombre in PESOS_EMPATIA:
+
         item = recibidos.get(nombre, {})
+
+        if not isinstance(item, dict):
+            item = {}
 
         try:
             nivel = int(item.get("nivel", 0))
         except (TypeError, ValueError):
             nivel = 0
 
+        nivel = max(0, min(4, nivel))
+
         indicadores_validos.append({
             "nombre": nombre,
-            "nivel": max(0, min(4, nivel)),
+            "nivel": nivel,
             "evidencia": str(
                 item.get(
                     "evidencia",
@@ -114,13 +133,16 @@ def normalizar_reporte_camila(reporte):
 
     reporte["indicadores"] = indicadores_validos
 
-    for campo in [
+    campos_lista = [
         "fortalezas",
         "oportunidades_mejora",
         "recomendaciones",
         "evolucion_interaccion",
         "limitaciones"
-    ]:
+    ]
+
+    for campo in campos_lista:
+
         valor = reporte.get(campo, [])
 
         if not isinstance(valor, list):
@@ -128,17 +150,21 @@ def normalizar_reporte_camila(reporte):
 
         reporte[campo] = [str(x) for x in valor]
 
+    # El porcentaje siempre se calcula en Python.
     reporte["porcentaje_efectividad"] = (
-        calcular_efectividad_camila(indicadores_validos)
+        calcular_efectividad_empatia(indicadores_validos)
     )
 
     return reporte
 
 
-def mostrar_reporte_camila(reporte):
-    """Muestra la rúbrica común de los tres casos de empatía."""
+def mostrar_reporte_empatia(reporte):
+    """
+    Muestra la evaluación estructurada de empatía.
+    Se utiliza para Arturo, Camila y Valeria.
+    """
 
-    reporte = normalizar_reporte_camila(reporte)
+    reporte = normalizar_reporte_empatia(reporte)
 
     st.metric(
         "Efectividad global",
@@ -152,16 +178,17 @@ def mostrar_reporte_camila(reporte):
     if rol_actual == "docente":
         st.caption(
             "Puntaje calculado en Python a partir de cinco indicadores "
-            "ponderados; cada indicador se califica de 0 a 4."
+            "ponderados. Cada indicador se califica de 0 a 4."
         )
 
     filas = []
 
     for item in reporte.get("indicadores", []):
+
         filas.append({
             "Indicador": item["nombre"],
             "Nivel (0-4)": item["nivel"],
-            "Peso (%)": PESOS_CAMILA[item["nombre"]],
+            "Peso (%)": PESOS_EMPATIA[item["nombre"]],
             "Evidencia textual": item["evidencia"]
         })
 
@@ -172,10 +199,15 @@ def mostrar_reporte_camila(reporte):
     )
 
     for item in reporte.get("indicadores", []):
+
         with st.expander(
             f"{item['nombre']} — Nivel {item['nivel']}/4"
         ):
-            st.markdown(f"**Evidencia:** {item['evidencia']}")
+
+            st.markdown(
+                f"**Evidencia:** {item['evidencia']}"
+            )
+
             st.markdown(
                 f"**Justificación:** {item['justificacion']}"
             )
@@ -187,37 +219,57 @@ def mostrar_reporte_camila(reporte):
         ("Evolución de la interacción", "evolucion_interaccion"),
         ("Limitaciones de la evaluación", "limitaciones")
     ]:
+
         st.markdown(f"#### {titulo}")
 
         elementos = reporte.get(campo, [])
 
         if elementos:
+
             for elemento in elementos:
                 st.markdown(f"- {elemento}")
+
         else:
-            st.write("No se registraron elementos en esta sección.")
+            st.write(
+                "No se registraron elementos en esta sección."
+            )
 
 
 def mostrar_reporte_historial(reporte):
-    """Presenta reportes estructurados y conserva Renato en texto."""
+    """
+    Interpreta reportes guardados en Google Sheets.
+
+    Los reportes de empatía se muestran con la rúbrica.
+    El reporte narrativo de Renato se conserva como texto.
+    """
 
     if isinstance(reporte, dict):
+
         datos = reporte
+
     else:
+
         texto = str(reporte).strip()
 
         try:
             datos = json.loads(texto)
+
         except (json.JSONDecodeError, TypeError, ValueError):
-            st.markdown(texto if texto else "Sin reporte registrado.")
+
+            st.markdown(
+                texto if texto else "Sin reporte registrado."
+            )
             return
 
     if (
         isinstance(datos, dict)
         and isinstance(datos.get("indicadores"), list)
     ):
-        mostrar_reporte_camila(datos)
+
+        mostrar_reporte_empatia(datos)
+
     else:
+
         st.markdown(str(reporte))
 
 
@@ -268,6 +320,7 @@ def verificar_credenciales(correo, password):
     pass_clean = str(password).strip()
 
     try:
+
         conn = st.connection(
             "gsheets",
             type=GSheetsConnection
@@ -288,6 +341,7 @@ def verificar_credenciales(correo, password):
             "Correo" in df_usuarios.columns
             and "Contraseña" in df_usuarios.columns
         ):
+
             df_usuarios["Correo"] = (
                 df_usuarios["Correo"]
                 .astype(str)
@@ -311,12 +365,14 @@ def verificar_credenciales(correo, password):
                 return match.iloc[0].to_dict()
 
         else:
+
             st.error(
                 "No se encontraron las columnas "
                 "'Correo' o 'Contraseña' en Usuarios."
             )
 
     except Exception as e:
+
         st.error(
             f"Error al conectar con la base de datos de usuarios: {e}"
         )
@@ -327,6 +383,7 @@ def verificar_credenciales(correo, password):
 def obtener_lista_docentes():
 
     try:
+
         conn = st.connection(
             "gsheets",
             type=GSheetsConnection
@@ -347,6 +404,7 @@ def obtener_lista_docentes():
             "Rol" in df_usuarios.columns
             and "Nombre_Completo" in df_usuarios.columns
         ):
+
             mask_docentes = (
                 df_usuarios["Rol"]
                 .astype(str)
@@ -365,13 +423,12 @@ def obtener_lista_docentes():
                 return sorted(lista_docentes)
 
     except Exception as e:
+
         st.warning(
             f"No se pudo cargar la lista de docentes: {e}"
         )
 
     return ["Sin docentes registrados"]
-
-
 # ==========================================
 # 6. PROMPT COMÚN DE EVALUACIÓN DE EMPATÍA
 # ==========================================
@@ -907,9 +964,6 @@ CASOS = {
 # 12. PANTALLA DE LOGIN
 # ==========================================
 
-if "autenticado" not in st.session_state:
-    st.session_state.autenticado = False
-
 if not st.session_state.autenticado:
 
     st.title("🔐 Acceso al Simulador")
@@ -935,9 +989,13 @@ if not st.session_state.autenticado:
         if btn_login:
 
             if not correo_input or not pass_input:
-                st.warning("Por favor completa ambos campos.")
+
+                st.warning(
+                    "Por favor completa ambos campos."
+                )
 
             else:
+
                 with st.spinner("Validando credenciales..."):
 
                     datos = verificar_credenciales(
@@ -946,17 +1004,18 @@ if not st.session_state.autenticado:
                     )
 
                     if datos:
+
                         st.session_state.autenticado = True
                         st.session_state.usuario_actual = datos
+
                         st.rerun()
 
                     else:
+
                         st.error(
                             "Correo o contraseña incorrectos. "
                             "Verifica tus datos."
                         )
-
-
 # ==========================================
 # 13. APLICACIÓN PRINCIPAL
 # ==========================================
@@ -993,8 +1052,10 @@ else:
             "🚪 Cerrar Sesión",
             use_container_width=True
         ):
+
             st.session_state.autenticado = False
             st.session_state.usuario_actual = None
+
             st.rerun()
 
         st.markdown("---")
@@ -1074,6 +1135,7 @@ else:
         st.subheader(datos_caso["titulo_interfaz"])
 
         if datos_caso.get("nivel_dificultad"):
+
             st.caption(
                 f"🎯 Nivel de dificultad: "
                 f"{datos_caso['nivel_dificultad']}"
@@ -1127,6 +1189,7 @@ else:
         ]
 
         with col_docente:
+
             docente_seleccionado = st.selectbox(
                 "Selecciona tu docente:",
                 docentes_disponibles,
@@ -1134,6 +1197,7 @@ else:
             )
 
         with col_curso:
+
             curso_seleccionado = st.selectbox(
                 "Selecciona tu curso:",
                 cursos_disponibles,
@@ -1167,7 +1231,7 @@ else:
                     use_container_width=True,
                     disabled=(
                         st.session_state.simulacion_activa
-                        or not nombre_estudiante.strip()
+                        or not str(nombre_estudiante).strip()
                     )
                 ):
 
@@ -1265,13 +1329,16 @@ else:
                             for m in intervenciones_usuario
                         ])
 
+                        # ----------------------------------
                         # CASOS DE EMPATÍA
+                        # ----------------------------------
+
                         if len(palabras_totales.strip()) < 5:
 
                             if es_caso_estructurado:
 
                                 st.session_state.reporte_final = (
-                                    normalizar_reporte_camila({
+                                    normalizar_reporte_empatia({
                                         "indicadores": [],
                                         "fortalezas": [],
                                         "oportunidades_mejora": [
@@ -1342,7 +1409,7 @@ else:
                                 )
 
                                 st.session_state.reporte_final = (
-                                    normalizar_reporte_camila(reporte_json)
+                                    normalizar_reporte_empatia(reporte_json)
                                 )
 
                             else:
@@ -1511,18 +1578,22 @@ else:
                         )
 
                     except Exception as e:
+
                         st.error(
                             f"Hubo un problema con la API: {e}"
                         )
 
             else:
 
-                if nombre_estudiante.strip():
+                if str(nombre_estudiante).strip():
+
                     st.info(
                         "💡 Todo listo. Presiona el botón "
                         "'🚀 Iniciar Simulación' para comenzar."
                     )
+
                 else:
+
                     st.info(
                         "⚠️ Ingresa el nombre del estudiante "
                         "para desbloquear la simulación."
@@ -1540,7 +1611,7 @@ else:
 
             if isinstance(st.session_state.reporte_final, dict):
 
-                mostrar_reporte_camila(
+                mostrar_reporte_empatia(
                     st.session_state.reporte_final
                 )
 
@@ -1676,6 +1747,10 @@ else:
                             f"Error al escribir en la nube: {e}"
                         )
 
+            # ----------------------------------
+            # REINICIAR CASO
+            # ----------------------------------
+
             if st.button(
                 "🔄 Reiniciar Caso Actual",
                 use_container_width=True
@@ -1716,7 +1791,6 @@ else:
             )
 
             st.markdown(texto_con_iconos)
-
     # ======================================
     # PESTAÑA 2: PROGRESO
     # ======================================
@@ -1739,301 +1813,632 @@ else:
             ).dropna(how="all")
 
             # ----------------------------------
-            # NORMALIZACIÓN DE PORCENTAJES
+            # VALIDACIÓN DE COLUMNAS
             # ----------------------------------
 
-            df_historico["Efectividad_Num"] = (
-                df_historico["Porcentaje_Efectividad"]
-                .astype(str)
-                .str.replace("%", "", regex=False)
-                .str.strip()
-            )
+            columnas_necesarias = [
+                "Fecha",
+                "Estudiante",
+                "Docente",
+                "Curso",
+                "Caso_Evaluado",
+                "Historial_Completo",
+                "Reporte_Evaluacion",
+                "Porcentaje_Efectividad"
+            ]
 
-            df_historico["Efectividad_Num"] = pd.to_numeric(
-                df_historico["Efectividad_Num"],
-                errors="coerce"
-            ).fillna(0)
+            columnas_faltantes = [
+                columna
+                for columna in columnas_necesarias
+                if columna not in df_historico.columns
+            ]
 
-            df_historico["Efectividad_Num"] = (
-                df_historico["Efectividad_Num"]
-                .apply(
-                    lambda x: x * 100 if 0 < x <= 1.0 else x
+            if columnas_faltantes:
+
+                st.error(
+                    "La hoja 'Hoja 1' no contiene las siguientes "
+                    f"columnas necesarias: {columnas_faltantes}"
                 )
-            )
-
-            df_historico["Fecha"] = pd.to_datetime(
-                df_historico["Fecha"],
-                errors="coerce"
-            )
-
-            rol_actual = str(
-                st.session_state.usuario_actual["Rol"]
-            ).strip().lower()
-
-            # ==================================
-            # VISTA PARA ESTUDIANTES
-            # ==================================
-
-            if rol_actual == "estudiante":
-
-                mi_nombre = (
-                    st.session_state.usuario_actual["Nombre_Completo"]
-                )
-
-                df_mi_progreso = df_historico[
-                    df_historico["Estudiante"]
-                    .astype(str)
-                    .str.strip()
-                    .str.lower()
-                    == mi_nombre.strip().lower()
-                ].sort_values("Fecha")
-
-                if df_mi_progreso.empty:
-
-                    st.info(
-                        "Aún no registras simulaciones guardadas. "
-                        "Completa tu primer caso para ver tu evolución aquí."
-                    )
-
-                else:
-
-                    promedio = (
-                        df_mi_progreso["Efectividad_Num"].mean()
-                    )
-
-                    total_casos = len(df_mi_progreso)
-
-                    c1, c2 = st.columns(2)
-
-                    c1.metric(
-                        "Promedio General de Efectividad",
-                        f"{promedio:.1f}%"
-                    )
-
-                    c2.metric(
-                        "Simulaciones Realizadas",
-                        total_casos
-                    )
-
-                    st.subheader("📈 Mi Curva de Aprendizaje")
-
-                    chart_estudiante = (
-                        alt.Chart(df_mi_progreso)
-                        .mark_line(point=True)
-                        .encode(
-                            x=alt.X(
-                                "Fecha:T",
-                                title="Fecha y Hora"
-                            ),
-                            y=alt.Y(
-                                "Efectividad_Num:Q",
-                                title="Porcentaje (%)",
-                                scale=alt.Scale(domain=[0, 100])
-                            ),
-                            tooltip=[
-                                "Fecha",
-                                "Caso_Evaluado",
-                                "Efectividad_Num"
-                            ]
-                        )
-                        .properties(height=300)
-                    )
-
-                    st.altair_chart(
-                        chart_estudiante,
-                        use_container_width=True
-                    )
-
-                    st.subheader("📋 Historial de Feedback")
-
-                    for _, row in df_mi_progreso.iterrows():
-
-                        fecha_str = (
-                            row["Fecha"].strftime("%Y-%m-%d %H:%M")
-                            if pd.notnull(row["Fecha"])
-                            else "Sin fecha"
-                        )
-
-                        with st.expander(
-                            f"Caso: {row['Caso_Evaluado']} | "
-                            f"Nota: {row['Efectividad_Num']:.1f}% "
-                            f"({fecha_str})"
-                        ):
-
-                            st.markdown(
-                                f"**Docente:** {row['Docente']}"
-                            )
-
-                            st.markdown("#### 📝 Reporte evaluativo")
-
-                            reporte_guardado = row.get(
-                                "Reporte_Evaluacion",
-                                "Sin reporte registrado."
-                            )
-
-                            mostrar_reporte_historial(
-                                reporte_guardado
-                            )
-
-            # ==================================
-            # VISTA PARA DOCENTES
-            # ==================================
 
             else:
 
-                mi_nombre_docente = (
-                    st.session_state.usuario_actual["Nombre_Completo"]
+                # ----------------------------------
+                # NORMALIZACIÓN DE PORCENTAJES
+                # ----------------------------------
+
+                df_historico["Efectividad_Num"] = (
+                    df_historico["Porcentaje_Efectividad"]
+                    .astype(str)
+                    .str.replace("%", "", regex=False)
+                    .str.strip()
                 )
 
-                df_docente = df_historico[
-                    df_historico["Docente"]
-                    .astype(str)
-                    .str.strip()
-                    .str.lower()
-                    == mi_nombre_docente.strip().lower()
-                ]
+                df_historico["Efectividad_Num"] = pd.to_numeric(
+                    df_historico["Efectividad_Num"],
+                    errors="coerce"
+                ).fillna(0)
 
-                if df_docente.empty:
+                df_historico["Efectividad_Num"] = (
+                    df_historico["Efectividad_Num"]
+                    .apply(
+                        lambda x: x * 100 if 0 < x <= 1.0 else x
+                    )
+                )
 
-                    st.info(
-                        f"Aún no hay estudiantes que hayan registrado "
-                        f"prácticas seleccionando a **{mi_nombre_docente}** "
-                        "como su docente."
+                # Evita valores fuera del rango esperado.
+                df_historico["Efectividad_Num"] = (
+                    df_historico["Efectividad_Num"]
+                    .clip(lower=0, upper=100)
+                )
+
+                df_historico["Fecha"] = pd.to_datetime(
+                    df_historico["Fecha"],
+                    errors="coerce"
+                )
+
+                rol_actual = str(
+                    st.session_state.usuario_actual["Rol"]
+                ).strip().lower()
+
+                # ==================================
+                # VISTA PARA ESTUDIANTES
+                # ==================================
+
+                if rol_actual == "estudiante":
+
+                    mi_nombre = (
+                        st.session_state.usuario_actual[
+                            "Nombre_Completo"
+                        ]
                     )
 
-                else:
+                    df_mi_progreso = df_historico[
+                        df_historico["Estudiante"]
+                        .astype(str)
+                        .str.strip()
+                        .str.lower()
+                        == mi_nombre.strip().lower()
+                    ].copy()
 
-                    estudiantes_lista = list(
-                        df_docente["Estudiante"].unique()
+                    df_mi_progreso = (
+                        df_mi_progreso
+                        .sort_values("Fecha")
                     )
 
-                    st.subheader(
-                        f"👨‍🏫 Panel del Docente: {mi_nombre_docente}"
-                    )
+                    if df_mi_progreso.empty:
 
-                    st.caption(
-                        f"Visualizando resultados de tus "
-                        f"{len(estudiantes_lista)} estudiantes asignados."
-                    )
-
-                    estudiante_sel = st.selectbox(
-                        "Selecciona un estudiante para revisar su perfil:",
-                        estudiantes_lista
-                    )
-
-                    df_estudiante_sel = df_docente[
-                        df_docente["Estudiante"] == estudiante_sel
-                    ].sort_values("Fecha")
-
-                    c1, c2 = st.columns(2)
-
-                    c1.metric(
-                        "Promedio del Estudiante",
-                        f"{df_estudiante_sel['Efectividad_Num'].mean():.1f}%"
-                    )
-
-                    c2.metric(
-                        "Intentos Totales",
-                        len(df_estudiante_sel)
-                    )
-
-                    st.subheader(
-                        f"📈 Evolución de {estudiante_sel}"
-                    )
-
-                    chart_docente = (
-                        alt.Chart(df_estudiante_sel)
-                        .mark_line(point=True)
-                        .encode(
-                            x=alt.X(
-                                "Fecha:T",
-                                title="Fecha y Hora"
-                            ),
-                            y=alt.Y(
-                                "Efectividad_Num:Q",
-                                title="Porcentaje (%)",
-                                scale=alt.Scale(domain=[0, 100])
-                            ),
-                            tooltip=[
-                                "Fecha",
-                                "Caso_Evaluado",
-                                "Efectividad_Num"
-                            ]
-                        )
-                        .properties(height=300)
-                    )
-
-                    st.altair_chart(
-                        chart_docente,
-                        use_container_width=True
-                    )
-
-                    st.subheader(
-                        "📋 Detalle de Interacciones y Reportes Evaluativos"
-                    )
-
-                    for idx, row in df_estudiante_sel.iterrows():
-
-                        fecha_str = (
-                            row["Fecha"].strftime("%Y-%m-%d %H:%M")
-                            if pd.notnull(row["Fecha"])
-                            else "Sin fecha"
+                        st.info(
+                            "Aún no registras simulaciones guardadas. "
+                            "Completa tu primer caso para ver tu "
+                            "evolución aquí."
                         )
 
-                        nota_display = (
-                            f"{row['Efectividad_Num']:.1f}%"
+                    else:
+
+                        # ----------------------------------
+                        # FILTRO POR CASO
+                        # ----------------------------------
+
+                        st.subheader(
+                            "🔎 Filtrar mi progreso"
                         )
 
-                        with st.expander(
-                            f"📌 {fecha_str} | "
-                            f"Caso: {row['Caso_Evaluado']} | "
-                            f"Nota: {nota_display}"
-                        ):
+                        casos_disponibles = sorted(
+                            df_mi_progreso["Caso_Evaluado"]
+                            .dropna()
+                            .astype(str)
+                            .unique()
+                            .tolist()
+                        )
 
-                            st.markdown(
-                                f"**Curso:** {row.get('Curso', 'N/A')}"
+                        opciones_filtro = [
+                            "Todos los casos"
+                        ] + casos_disponibles
+
+                        caso_filtro = st.selectbox(
+                            "Filtrar progreso por caso:",
+                            opciones_filtro,
+                            key="filtro_progreso_estudiante"
+                        )
+
+                        # ----------------------------------
+                        # APLICAR FILTRO
+                        # ----------------------------------
+
+                        if caso_filtro == "Todos los casos":
+
+                            df_progreso_filtrado = (
+                                df_mi_progreso.copy()
                             )
+
+                        else:
+
+                            df_progreso_filtrado = (
+                                df_mi_progreso[
+                                    df_mi_progreso["Caso_Evaluado"]
+                                    .astype(str)
+                                    == caso_filtro
+                                ].copy()
+                            )
+
+                        df_progreso_filtrado = (
+                            df_progreso_filtrado
+                            .sort_values("Fecha")
+                            .reset_index(drop=True)
+                        )
+
+                        if df_progreso_filtrado.empty:
+
+                            st.info(
+                                "No hay registros para el caso "
+                                "seleccionado."
+                            )
+
+                        else:
+
+                            # ----------------------------------
+                            # MÉTRICAS PRINCIPALES
+                            # ----------------------------------
+
+                            promedio = (
+                                df_progreso_filtrado[
+                                    "Efectividad_Num"
+                                ].mean()
+                            )
+
+                            total_intentos = len(
+                                df_progreso_filtrado
+                            )
+
+                            mejor_resultado = (
+                                df_progreso_filtrado[
+                                    "Efectividad_Num"
+                                ].max()
+                            )
+
+                            c1, c2, c3 = st.columns(3)
+
+                            c1.metric(
+                                "Promedio de Efectividad",
+                                f"{promedio:.1f}%"
+                            )
+
+                            c2.metric(
+                                "Simulaciones Realizadas",
+                                total_intentos
+                            )
+
+                            c3.metric(
+                                "Mejor Resultado",
+                                f"{mejor_resultado:.1f}%"
+                            )
+
+                            # ----------------------------------
+                            # CURVA DE APRENDIZAJE
+                            # ----------------------------------
 
                             st.markdown("---")
 
-                            col_reporte, col_transcripcion = (
-                                st.columns(2)
+                            st.subheader(
+                                "📈 Mi Curva de Aprendizaje"
                             )
 
-                            with col_reporte:
+                            st.caption(
+                                "Visualiza cómo evoluciona tu "
+                                "efectividad a medida que realizas "
+                                "nuevas simulaciones."
+                            )
 
-                                st.markdown(
-                                    "#### 📝 Reporte Evaluativo Recibido:"
-                                )
+                            # Numeración cronológica de intentos.
+                            df_grafico = (
+                                df_progreso_filtrado.copy()
+                            )
 
-                                reporte_guardado = row.get(
-                                    "Reporte_Evaluacion",
-                                    "Sin reporte registrado."
-                                )
+                            df_grafico["Intento"] = range(
+                                1,
+                                len(df_grafico) + 1
+                            )
 
-                                mostrar_reporte_historial(
-                                    reporte_guardado
-                                )
+                            df_grafico["Fecha_Texto"] = (
+                                df_grafico["Fecha"]
+                                .dt.strftime("%d/%m/%Y %H:%M")
+                                .fillna("Sin fecha")
+                            )
 
-                            with col_transcripcion:
+                            # Cuando se visualizan todos los casos,
+                            # cada caso tiene su propia línea.
+                            if caso_filtro == "Todos los casos":
 
-                                st.markdown(
-                                    "#### 💬 Transcripción de la Conversación:"
-                                )
-
-                                historial_txt = str(
-                                    row.get(
-                                        "Historial_Completo",
-                                        "Sin transcripción disponible."
+                                chart_estudiante = (
+                                    alt.Chart(df_grafico)
+                                    .mark_line(
+                                        point=True,
+                                        strokeWidth=3
                                     )
+                                    .encode(
+                                        x=alt.X(
+                                            "Intento:Q",
+                                            title="Número de intento",
+                                            axis=alt.Axis(
+                                                tickMinStep=1
+                                            )
+                                        ),
+                                        y=alt.Y(
+                                            "Efectividad_Num:Q",
+                                            title="Efectividad (%)",
+                                            scale=alt.Scale(
+                                                domain=[0, 100]
+                                            )
+                                        ),
+                                        color=alt.Color(
+                                            "Caso_Evaluado:N",
+                                            title="Caso evaluado"
+                                        ),
+                                        tooltip=[
+                                            alt.Tooltip(
+                                                "Intento:Q",
+                                                title="Intento"
+                                            ),
+                                            alt.Tooltip(
+                                                "Fecha_Texto:N",
+                                                title="Fecha"
+                                            ),
+                                            alt.Tooltip(
+                                                "Caso_Evaluado:N",
+                                                title="Caso"
+                                            ),
+                                            alt.Tooltip(
+                                                "Efectividad_Num:Q",
+                                                title="Efectividad",
+                                                format=".1f"
+                                            )
+                                        ]
+                                    )
+                                    .properties(height=350)
+                                    .interactive()
                                 )
 
-                                st.text_area(
-                                    label="Historial de audio/texto:",
-                                    value=historial_txt,
-                                    height=300,
-                                    key=f"historial_docente_{idx}"
+                            else:
+
+                                chart_estudiante = (
+                                    alt.Chart(df_grafico)
+                                    .mark_line(
+                                        point=True,
+                                        strokeWidth=3
+                                    )
+                                    .encode(
+                                        x=alt.X(
+                                            "Intento:Q",
+                                            title="Número de intento",
+                                            axis=alt.Axis(
+                                                tickMinStep=1
+                                            )
+                                        ),
+                                        y=alt.Y(
+                                            "Efectividad_Num:Q",
+                                            title="Efectividad (%)",
+                                            scale=alt.Scale(
+                                                domain=[0, 100]
+                                            )
+                                        ),
+                                        tooltip=[
+                                            alt.Tooltip(
+                                                "Intento:Q",
+                                                title="Intento"
+                                            ),
+                                            alt.Tooltip(
+                                                "Fecha_Texto:N",
+                                                title="Fecha"
+                                            ),
+                                            alt.Tooltip(
+                                                "Efectividad_Num:Q",
+                                                title="Efectividad",
+                                                format=".1f"
+                                            )
+                                        ]
+                                    )
+                                    .properties(height=350)
+                                    .interactive()
                                 )
+
+                            st.altair_chart(
+                                chart_estudiante,
+                                use_container_width=True
+                            )
+
+                            # ----------------------------------
+                            # EVOLUCIÓN DEL DESEMPEÑO
+                            # ----------------------------------
+
+                            st.markdown("---")
+
+                            st.subheader(
+                                "📊 Evolución de mi desempeño"
+                            )
+
+                            primer_resultado = float(
+                                df_progreso_filtrado.iloc[0][
+                                    "Efectividad_Num"
+                                ]
+                            )
+
+                            ultimo_resultado = float(
+                                df_progreso_filtrado.iloc[-1][
+                                    "Efectividad_Num"
+                                ]
+                            )
+
+                            diferencia = (
+                                ultimo_resultado - primer_resultado
+                            )
+
+                            col_inicio, col_final = st.columns(2)
+
+                            col_inicio.metric(
+                                "Primer resultado",
+                                f"{primer_resultado:.1f}%"
+                            )
+
+                            col_final.metric(
+                                "Último resultado",
+                                f"{ultimo_resultado:.1f}%",
+                                delta=f"{diferencia:+.1f} puntos"
+                            )
+
+                            if diferencia > 0:
+
+                                st.success(
+                                    f"¡Vas mejorando! Tu efectividad "
+                                    f"aumentó {diferencia:.1f} puntos "
+                                    "porcentuales entre tu primer y "
+                                    "último intento."
+                                )
+
+                            elif diferencia < 0:
+
+                                st.warning(
+                                    f"Tu último resultado disminuyó "
+                                    f"{abs(diferencia):.1f} puntos "
+                                    "porcentuales respecto a tu primer "
+                                    "intento. Revisa tu feedback para "
+                                    "identificar oportunidades de mejora."
+                                )
+
+                            else:
+
+                                st.info(
+                                    "Tu primer y último resultado "
+                                    "son iguales. Continúa practicando "
+                                    "para fortalecer tus habilidades."
+                                )
+
+                            # ----------------------------------
+                            # HISTORIAL DE FEEDBACK
+                            # ----------------------------------
+
+                            st.markdown("---")
+
+                            st.subheader(
+                                "📋 Historial de Feedback"
+                            )
+
+                            st.caption(
+                                "Los reportes mostrados corresponden "
+                                "al filtro seleccionado."
+                            )
+
+                            for _, row in (
+                                df_progreso_filtrado
+                                .iloc[::-1]
+                                .iterrows()
+                            ):
+
+                                fecha_str = (
+                                    row["Fecha"].strftime(
+                                        "%Y-%m-%d %H:%M"
+                                    )
+                                    if pd.notnull(row["Fecha"])
+                                    else "Sin fecha"
+                                )
+
+                                with st.expander(
+                                    f"Caso: {row['Caso_Evaluado']} | "
+                                    f"Nota: "
+                                    f"{row['Efectividad_Num']:.1f}% "
+                                    f"({fecha_str})"
+                                ):
+
+                                    st.markdown(
+                                        f"**Docente:** "
+                                        f"{row['Docente']}"
+                                    )
+
+                                    st.markdown(
+                                        f"**Curso:** "
+                                        f"{row['Curso']}"
+                                    )
+
+                                    st.markdown(
+                                        "#### 📝 Reporte evaluativo"
+                                    )
+
+                                    reporte_guardado = row.get(
+                                        "Reporte_Evaluacion",
+                                        "Sin reporte registrado."
+                                    )
+
+                                    mostrar_reporte_historial(
+                                        reporte_guardado
+                                    )
+
+                # ==================================
+                # VISTA PARA DOCENTES
+                # ==================================
+
+                else:
+
+                    mi_nombre_docente = (
+                        st.session_state.usuario_actual[
+                            "Nombre_Completo"
+                        ]
+                    )
+
+                    df_docente = df_historico[
+                        df_historico["Docente"]
+                        .astype(str)
+                        .str.strip()
+                        .str.lower()
+                        == mi_nombre_docente.strip().lower()
+                    ].copy()
+
+                    if df_docente.empty:
+
+                        st.info(
+                            f"Aún no hay estudiantes que hayan "
+                            f"registrado prácticas seleccionando a "
+                            f"**{mi_nombre_docente}** como su docente."
+                        )
+
+                    else:
+
+                        estudiantes_lista = list(
+                            df_docente["Estudiante"].unique()
+                        )
+
+                        st.subheader(
+                            f"👨‍🏫 Panel del Docente: "
+                            f"{mi_nombre_docente}"
+                        )
+
+                        st.caption(
+                            f"Visualizando resultados de tus "
+                            f"{len(estudiantes_lista)} estudiantes asignados."
+                        )
+
+                        estudiante_sel = st.selectbox(
+                            "Selecciona un estudiante para revisar su perfil:",
+                            estudiantes_lista
+                        )
+
+                        df_estudiante_sel = df_docente[
+                            df_docente["Estudiante"]
+                            == estudiante_sel
+                        ].sort_values("Fecha")
+
+                        c1, c2 = st.columns(2)
+
+                        c1.metric(
+                            "Promedio del Estudiante",
+                            f"{df_estudiante_sel['Efectividad_Num'].mean():.1f}%"
+                        )
+
+                        c2.metric(
+                            "Intentos Totales",
+                            len(df_estudiante_sel)
+                        )
+
+                        st.subheader(
+                            f"📈 Evolución de {estudiante_sel}"
+                        )
+
+                        chart_docente = (
+                            alt.Chart(df_estudiante_sel)
+                            .mark_line(point=True)
+                            .encode(
+                                x=alt.X(
+                                    "Fecha:T",
+                                    title="Fecha y Hora"
+                                ),
+                                y=alt.Y(
+                                    "Efectividad_Num:Q",
+                                    title="Porcentaje (%)",
+                                    scale=alt.Scale(
+                                        domain=[0, 100]
+                                    )
+                                ),
+                                tooltip=[
+                                    "Fecha",
+                                    "Caso_Evaluado",
+                                    "Efectividad_Num"
+                                ]
+                            )
+                            .properties(height=300)
+                        )
+
+                        st.altair_chart(
+                            chart_docente,
+                            use_container_width=True
+                        )
+
+                        st.subheader(
+                            "📋 Detalle de Interacciones y Reportes Evaluativos"
+                        )
+
+                        for idx, row in df_estudiante_sel.iterrows():
+
+                            fecha_str = (
+                                row["Fecha"].strftime(
+                                    "%Y-%m-%d %H:%M"
+                                )
+                                if pd.notnull(row["Fecha"])
+                                else "Sin fecha"
+                            )
+
+                            nota_display = (
+                                f"{row['Efectividad_Num']:.1f}%"
+                            )
+
+                            with st.expander(
+                                f"📌 {fecha_str} | "
+                                f"Caso: {row['Caso_Evaluado']} | "
+                                f"Nota: {nota_display}"
+                            ):
+
+                                st.markdown(
+                                    f"**Curso:** "
+                                    f"{row.get('Curso', 'N/A')}"
+                                )
+
+                                st.markdown("---")
+
+                                col_reporte, col_transcripcion = (
+                                    st.columns(2)
+                                )
+
+                                with col_reporte:
+
+                                    st.markdown(
+                                        "#### 📝 Reporte Evaluativo Recibido:"
+                                    )
+
+                                    reporte_guardado = row.get(
+                                        "Reporte_Evaluacion",
+                                        "Sin reporte registrado."
+                                    )
+
+                                    mostrar_reporte_historial(
+                                        reporte_guardado
+                                    )
+
+                                with col_transcripcion:
+
+                                    st.markdown(
+                                        "#### 💬 Transcripción de la Conversación:"
+                                    )
+
+                                    historial_txt = str(
+                                        row.get(
+                                            "Historial_Completo",
+                                            "Sin transcripción disponible."
+                                        )
+                                    )
+
+                                    st.text_area(
+                                        label="Historial de audio/texto:",
+                                        value=historial_txt,
+                                        height=300,
+                                        key=f"historial_docente_{idx}"
+                                    )
 
         except Exception as e:
 
