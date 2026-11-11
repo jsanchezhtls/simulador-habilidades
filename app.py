@@ -442,7 +442,6 @@ en la transcripción. No evalúes las respuestas del personaje como si fueran
 acciones del estudiante.
 
 CRITERIOS OBLIGATORIOS:
-
 - Utiliza exclusivamente evidencia textual presente en la conversación.
 - No inventes citas ni atribuyas expresiones que no aparecen.
 - No infieras tono de voz, volumen, pausas, lenguaje corporal,
@@ -468,7 +467,6 @@ Niveles:
 
 1. Reconocimiento emocional (20%):
 Identifica emociones y situación concreta del personaje.
-
 0: No reconoce emociones ni situación.
 1: Reconocimiento vago o incorrecto.
 2: Identifica una emoción o situación de forma general.
@@ -478,7 +476,6 @@ Identifica emociones y situación concreta del personaje.
 2. Escucha activa e indagación (25%):
 Hace preguntas abiertas, pertinentes y de seguimiento;
 retoma lo expresado por el personaje.
-
 0: No indaga ni retoma.
 1: Preguntas cerradas o superficiales.
 2: Alguna pregunta pertinente sin profundizar.
@@ -489,7 +486,6 @@ la perspectiva.
 3. Validación emocional (30%):
 Legitima la experiencia emocional sin minimizar, juzgar
 ni justificar el trato recibido.
-
 0: Invalida o no valida.
 1: Fórmulas genéricas o ambiguas.
 2: Valida parcialmente.
@@ -500,7 +496,6 @@ sin apresurar soluciones.
 4. Comprensión de perspectivas (15%):
 Demuestra comprensión de la experiencia, necesidades y barreras
 del personaje sin asumir ni culpabilizar.
-
 0: Distorsiona o ignora su perspectiva.
 1: Comprensión superficial.
 2: Reconoce algunos factores.
@@ -510,7 +505,6 @@ y comprueba su comprensión.
 
 5. Construcción conjunta de soluciones (10%):
 Explora alternativas con el personaje y considera sus necesidades.
-
 0: No propone ni construye alternativas.
 1: Impone una solución apresurada.
 2: Propone una alternativa parcialmente pertinente.
@@ -518,7 +512,6 @@ Explora alternativas con el personaje y considera sus necesidades.
 4: Co-diseña alternativas específicas, realistas y acordadas.
 
 CONSIDERACIONES SEGÚN EL CASO:
-
 - Arturo: considera su necesidad de reconocimiento y valoración.
 - Camila: considera la exclusión, los comentarios descalificadores
   y el esfuerzo que realiza para aprender.
@@ -528,53 +521,126 @@ CONSIDERACIONES SEGÚN EL CASO:
   información privada. Respetar su privacidad puede ser una evidencia
   positiva de empatía.
 
-DEVUELVE ÚNICAMENTE UN JSON VÁLIDO:
+INSTRUCCIONES OBLIGATORIAS PARA LAS CINCO SECCIONES DESCRIPTIVAS:
 
+1. "fortalezas":
+- Incluye entre 1 y 3 fortalezas observables en las intervenciones
+  del estudiante.
+- Cada fortaleza debe describir una conducta concreta y explicar
+  brevemente por qué constituye una actuación empática.
+- Cuando sea posible, incorpora una cita textual breve y exacta.
+- Si no se observa ninguna fortaleza, escribe un elemento que lo indique
+  explícitamente y explica que la transcripción no aporta evidencia.
+
+2. "oportunidades_mejora":
+- Incluye entre 1 y 3 aspectos específicos que el estudiante necesita
+  desarrollar.
+- Relaciona cada aspecto con uno o más indicadores de la rúbrica.
+- Explica qué hizo o dejó de hacer el estudiante y qué efecto observable
+  tuvo en el desarrollo de la conversación.
+- No confundas la falta de información del personaje con una deficiencia
+  del estudiante.
+- Si no hay evidencia suficiente para identificar una oportunidad concreta,
+  indícalo expresamente.
+
+3. "recomendaciones":
+- Incluye entre 2 y 3 recomendaciones prácticas, específicas y aplicables
+  en una próxima conversación.
+- Prioriza los indicadores con menor nivel.
+- Formula acciones que el estudiante pueda realizar; evita consejos vagos
+  como "ser más empático" o "escuchar mejor".
+- Adapta las recomendaciones a la dificultad y situación del caso.
+
+4. "evolucion_interaccion":
+- Describe cómo se desarrolló la interacción desde el inicio hasta el cierre.
+- Señala cambios observables en las respuestas del personaje y relaciónalos
+  con las intervenciones textuales del estudiante, sin atribuir causalidad
+  cuando no exista evidencia suficiente.
+- Si la conversación fue demasiado breve para identificar evolución,
+  indícalo expresamente.
+
+5. "limitaciones":
+- Incluye al menos la limitación de que la evaluación se basa en una
+  transcripción textual obtenida mediante reconocimiento automático
+  de voz, que puede contener errores.
+- Añade otras limitaciones únicamente si realmente se desprenden
+  de la conversación (por ejemplo, diálogo breve o ausencia de oportunidades
+  para observar algún indicador).
+- Distingue entre una habilidad no demostrada y una habilidad que no pudo
+  evaluarse por falta de oportunidad.
+- No inventes limitaciones.
+
+REGLAS GENERALES DE CALIDAD:
+- Ninguna de las cinco secciones descriptivas debe quedar como una lista vacía.
+- No uses listas vacías como respuesta final: cada sección debe contener
+  al menos un elemento informativo.
+- Toda valoración debe basarse en la transcripción y ser coherente con
+  los niveles asignados en los cinco indicadores.
+- No repitas la misma observación en todas las secciones.
+- Si la interacción es muy breve, evita conclusiones contundentes y explica
+  esa limitación.
+- Las respuestas deben ser claras, formativas, respetuosas y útiles
+  para que el estudiante sepa qué hizo bien y cómo puede mejorar.
+
+DEVUELVE ÚNICAMENTE UN JSON VÁLIDO, sin comentarios ni bloques Markdown.
+Debes incluir exactamente los cinco indicadores y las cinco secciones
+descriptivas indicadas. No omitas ninguna clave.
+
+ESTRUCTURA OBLIGATORIA DEL JSON:
 {
   "indicadores": [
     {
       "nombre": "Reconocimiento emocional",
       "nivel": 0,
-      "evidencia": "cita textual breve o ausencia de evidencia",
-      "justificacion": "explicación basada en la rúbrica"
+      "evidencia": "Cita textual breve y exacta o indicación explícita de ausencia de evidencia.",
+      "justificacion": "Justificación vinculada con el descriptor de la rúbrica."
     },
     {
       "nombre": "Escucha activa e indagación",
       "nivel": 0,
-      "evidencia": "...",
-      "justificacion": "..."
+      "evidencia": "Cita textual breve y exacta o indicación explícita de ausencia de evidencia.",
+      "justificacion": "Justificación vinculada con el descriptor de la rúbrica."
     },
     {
       "nombre": "Validación emocional",
       "nivel": 0,
-      "evidencia": "...",
-      "justificacion": "..."
+      "evidencia": "Cita textual breve y exacta o indicación explícita de ausencia de evidencia.",
+      "justificacion": "Justificación vinculada con el descriptor de la rúbrica."
     },
     {
       "nombre": "Comprensión de perspectivas",
       "nivel": 0,
-      "evidencia": "...",
-      "justificacion": "..."
+      "evidencia": "Cita textual breve y exacta o indicación explícita de ausencia de evidencia.",
+      "justificacion": "Justificación vinculada con el descriptor de la rúbrica."
     },
     {
       "nombre": "Construcción conjunta de soluciones",
       "nivel": 0,
-      "evidencia": "...",
-      "justificacion": "..."
+      "evidencia": "Cita textual breve y exacta o indicación explícita de ausencia de evidencia.",
+      "justificacion": "Justificación vinculada con el descriptor de la rúbrica."
     }
   ],
-  "fortalezas": [],
-  "oportunidades_mejora": [],
-  "recomendaciones": [],
-  "evolucion_interaccion": [],
+  "fortalezas": [
+    "Describe aquí una fortaleza observable o explica expresamente que no se identificaron fortalezas por falta de evidencia."
+  ],
+  "oportunidades_mejora": [
+    "Describe aquí una oportunidad concreta o explica expresamente por qué no puede identificarse."
+  ],
+  "recomendaciones": [
+    "Recomendación práctica y específica 1.",
+    "Recomendación práctica y específica 2."
+  ],
+  "evolucion_interaccion": [
+    "Describe la evolución observable o indica que la duración de la conversación no permite evaluarla."
+  ],
   "limitaciones": [
-    "Solo se evaluó la transcripción textual y el reconocimiento automático puede contener errores."
+    "La evaluación se basa en una transcripción textual generada mediante reconocimiento automático de voz, por lo que puede contener errores."
   ]
 }
 
 Incluye citas textuales cortas y exactas cuando existan.
 Si la conversación es demasiado breve, indícalo y evita conclusiones fuertes.
-No agregues campos ni markdown fuera del JSON.
+No agregues campos ni texto fuera del JSON.
 """
 
 
