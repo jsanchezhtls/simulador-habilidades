@@ -2,6 +2,7 @@ import streamlit as st
 
 # ==========================================
 # 1. CONFIGURACIÓN INICIAL
+# Versión corregida: aislamiento de grabaciones y claves únicas de transcripción
 # ==========================================
 
 st.set_page_config(
@@ -21,6 +22,7 @@ import os
 import json
 import tempfile
 import uuid
+import hashlib
 
 
 API_KEY_OPENAI = st.secrets["OPENAI_API_KEY"]
@@ -294,6 +296,26 @@ def construir_transcripcion(historial, nombre_personaje):
             lineas.append(f"{nombre_personaje}: {contenido}")
 
     return "\n\n".join(lineas)
+
+
+def audio_es_nuevo(audio_grabado):
+    """Evita reprocesar el mismo audio retenido por el widget en un rerun."""
+    if not audio_grabado or not isinstance(audio_grabado, dict):
+        return False
+
+    audio_bytes = audio_grabado.get("bytes")
+    if not audio_bytes:
+        return False
+
+    huella = hashlib.sha256(audio_bytes).hexdigest()
+    huella_anterior = st.session_state.get("ultima_huella_audio")
+
+    if huella == huella_anterior:
+        return False
+
+    # Se registra antes de llamar a Whisper para evitar duplicados si hay rerun.
+    st.session_state.ultima_huella_audio = huella
+    return True
 
 
 # ==========================================
@@ -1214,6 +1236,7 @@ else:
             st.session_state.simulacion_activa = False
             st.session_state.id_interaccion = None
             st.session_state.datos_sesion = None
+            st.session_state.ultima_huella_audio = None
             st.session_state.ruta_audio_salida = None
             st.session_state.reproducir_inicial = False
 
@@ -1328,6 +1351,7 @@ else:
 
                     st.session_state.simulacion_activa = True
                     st.session_state.id_interaccion = uuid.uuid4().hex
+                    st.session_state.ultima_huella_audio = None
                     st.session_state.datos_sesion = {
                         "estudiante": str(nombre_estudiante).strip(),
                         "docente": str(docente_seleccionado).strip(),
@@ -1570,11 +1594,13 @@ else:
                 audio_grabado = mic_recorder(
                     start_prompt="🔴 Presiona para Hablar",
                     stop_prompt="⏹️ Detener Grabación",
-                    key=f"grabador_{caso_seleccionado}",
+                    # Una clave nueva por simulación evita recuperar audio
+                    # retenido por el componente en una sesión anterior.
+                    key=f"grabador_{st.session_state.get('id_interaccion') or caso_seleccionado}",
                     format="wav"
                 )
 
-                if audio_grabado:
+                if audio_es_nuevo(audio_grabado):
 
                     estado = st.empty()
 
@@ -1882,6 +1908,7 @@ else:
                 st.session_state.simulacion_activa = False
                 st.session_state.id_interaccion = None
                 st.session_state.datos_sesion = None
+                st.session_state.ultima_huella_audio = None
                 st.session_state.ruta_audio_salida = None
                 st.session_state.reproducir_inicial = False
 
@@ -2835,11 +2862,23 @@ else:
                                             )
                                         )
 
+                                        identidad_fila = "|".join([
+                                            str(row.get("Estudiante", "")),
+                                            str(row.get("Fecha", "")),
+                                            str(row.get("Caso_Evaluado", "")),
+                                            str(row.get("Curso", "")),
+                                            historial_txt
+                                        ])
+                                        clave_transcripcion = hashlib.sha256(
+                                            identidad_fila.encode("utf-8")
+                                        ).hexdigest()[:20]
+
                                         st.text_area(
                                             label="Historial de audio/texto:",
                                             value=historial_txt,
                                             height=300,
-                                            key=f"historial_docente_{idx}"
+                                            key=f"historial_docente_{clave_transcripcion}",
+                                            disabled=True
                                         )
         except Exception as e:
 
