@@ -273,6 +273,29 @@ def mostrar_reporte_historial(reporte):
         st.markdown(str(reporte))
 
 
+def construir_transcripcion(historial, nombre_personaje):
+    """Construye la transcripción directamente desde el historial real de mensajes."""
+    lineas = []
+
+    for mensaje in historial:
+        if not isinstance(mensaje, dict):
+            continue
+
+        rol = mensaje.get("role")
+        contenido = str(mensaje.get("content", "")).strip()
+
+        # Excluye instrucciones internas y el disparador técnico inicial.
+        if rol == "system" or not contenido or contenido == "COMIENZA EL EJERCICIO":
+            continue
+
+        if rol == "user":
+            lineas.append(f"Tú: {contenido}")
+        elif rol == "assistant":
+            lineas.append(f"{nombre_personaje}: {contenido}")
+
+    return "\n\n".join(lineas)
+
+
 # ==========================================
 # 3. ESTILOS
 # ==========================================
@@ -1189,6 +1212,8 @@ else:
             st.session_state.conversacion_texto = ""
             st.session_state.reporte_final = ""
             st.session_state.simulacion_activa = False
+            st.session_state.id_interaccion = None
+            st.session_state.datos_sesion = None
             st.session_state.ruta_audio_salida = None
             st.session_state.reproducir_inicial = False
 
@@ -1302,6 +1327,14 @@ else:
                 ):
 
                     st.session_state.simulacion_activa = True
+                    st.session_state.id_interaccion = uuid.uuid4().hex
+                    st.session_state.datos_sesion = {
+                        "estudiante": str(nombre_estudiante).strip(),
+                        "docente": str(docente_seleccionado).strip(),
+                        "curso": str(curso_seleccionado).strip(),
+                        "caso": caso_seleccionado,
+                        "personaje": datos_caso["nombre_personaje"]
+                    }
 
                     with st.spinner(
                         f"Iniciando caso con "
@@ -1390,6 +1423,12 @@ else:
                             and m["content"] != "COMIENZA EL EJERCICIO"
                         ]
 
+                        transcripcion_sesion = construir_transcripcion(
+                            st.session_state.historial,
+                            datos_caso["nombre_personaje"]
+                        )
+                        st.session_state.conversacion_texto = transcripcion_sesion
+
                         palabras_totales = " ".join([
                             m["content"]
                             for m in intervenciones_usuario
@@ -1451,7 +1490,7 @@ else:
                                     "content": (
                                         "Evalúa esta transcripción de la "
                                         "simulación.\n\n"
-                                        + st.session_state.conversacion_texto
+                                        + transcripcion_sesion
                                     )
                                 }
                             ]
@@ -1774,19 +1813,27 @@ else:
                                 st.session_state.reporte_final
                             )
 
+                        datos_guardado = (
+                            st.session_state.get("datos_sesion") or {
+                                "estudiante": str(nombre_estudiante).strip(),
+                                "docente": str(docente_seleccionado).strip(),
+                                "curso": str(curso_seleccionado).strip(),
+                                "caso": caso_seleccionado,
+                                "personaje": datos_caso["nombre_personaje"]
+                            }
+                        )
+                        transcripcion_guardada = construir_transcripcion(
+                            st.session_state.historial,
+                            datos_guardado["personaje"]
+                        )
+
                         nueva_fila = pd.DataFrame([{
                             "Fecha": fecha_actual,
-                            "Estudiante": (
-                                nombre_estudiante
-                                if nombre_estudiante
-                                else "Anónimo"
-                            ),
-                            "Docente": docente_seleccionado,
-                            "Curso": curso_seleccionado,
-                            "Caso_Evaluado": caso_seleccionado,
-                            "Historial_Completo": (
-                                st.session_state.conversacion_texto
-                            ),
+                            "Estudiante": datos_guardado["estudiante"] or "Anónimo",
+                            "Docente": datos_guardado["docente"],
+                            "Curso": datos_guardado["curso"],
+                            "Caso_Evaluado": datos_guardado["caso"],
+                            "Historial_Completo": transcripcion_guardada,
                             "Reporte_Evaluacion": reporte_para_guardar,
                             "Porcentaje_Efectividad": solo_porcentaje
                         }])
@@ -1833,6 +1880,8 @@ else:
                 st.session_state.conversacion_texto = ""
                 st.session_state.reporte_final = ""
                 st.session_state.simulacion_activa = False
+                st.session_state.id_interaccion = None
+                st.session_state.datos_sesion = None
                 st.session_state.ruta_audio_salida = None
                 st.session_state.reproducir_inicial = False
 
@@ -1842,13 +1891,18 @@ else:
         # TRANSCRIPCIÓN
         # ----------------------------------
 
-        if st.session_state.conversacion_texto:
+        transcripcion_actual = construir_transcripcion(
+            st.session_state.get("historial", []),
+            datos_caso["nombre_personaje"]
+        )
+
+        if transcripcion_actual:
 
             st.markdown("---")
             st.markdown("### 💬 Transcripción de la conversación:")
 
             texto_con_iconos = (
-                st.session_state.conversacion_texto
+                transcripcion_actual
                 .replace("Tú:", "👤 **Tú:**")
                 .replace(
                     f"{datos_caso['nombre_personaje']}:",
